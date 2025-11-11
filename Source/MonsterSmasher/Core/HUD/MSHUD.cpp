@@ -2,3 +2,14 @@
 
 
 #include "MSHUD.h"
+
+AMSHUD::AMSHUD()
+{
+	
+}
+
+void AMSHUD::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}

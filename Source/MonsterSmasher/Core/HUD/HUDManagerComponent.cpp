@@ -2,7 +2,7 @@
 
 
 #include "HUDManagerComponent.h"
-#include "Core/HUD/UI/W_MSHUD.h"
+#include "Core/HUD/UI/W_MSGameplayHUD.h"
 #include "Core/HUD/UI/W_HealthBar.h"
 #include "GameFramework/PlayerController.h"
 #include "AbilitySystemComponent.h"
@@ -45,7 +45,7 @@ void UHUDManagerComponent::SetupHUDInternal()
 
 	if (AMSPlayerController* MSController = Cast<AMSPlayerController>(PC))
 	{
-		GameHUD = Cast<UW_MSHUD>(MSController->GetGameHUD());
+		GameHUD = Cast<UW_MSGameplayHUD>(MSController->GetGameHUD());
 		if (GameHUD && CachedASC && CachedAttributes)
 		{
 			if (UW_HealthBar* HealthBar = GameHUD->GetHealthBarWidget())

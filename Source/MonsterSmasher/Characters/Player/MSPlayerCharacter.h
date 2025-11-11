@@ -105,5 +105,5 @@ protected:
 	// --------------- Attribute changes callback ---------------
 
 	// Attribute change callbacks (optional to override for player-specific UI updates)
-	// virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
+	//virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
 };

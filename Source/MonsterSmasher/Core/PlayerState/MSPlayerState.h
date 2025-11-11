@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ModularPlayerState.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayEffectTypes.h"
 #include "MSPlayerState.generated.h"
 
 class UMSAbilitySystemComponent;
@@ -48,4 +49,8 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void PostInitializeComponents() override;
+
+	// --- Attribute Change Callbacks (to be overridden by derived classes) ---
+
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 };

@@ -4,7 +4,11 @@
 #include "MSPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
-#include "Characters/Player/MSPlayerCharacter.h"
+#include "Core/HUD/UI/W_MSGameplayHUD.h"
+#include "Core/HUD/UI/W_HealthBar.h"
+#include "Core/PlayerState/MSPlayerState.h"
+#include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
+
 
 void AMSPlayerController::BeginPlay()
 {
@@ -26,18 +30,68 @@ void AMSPlayerController::BeginPlay()
 		}
 	}
 
-	// Add HUD widget to the viewport
-	if (IsLocalPlayerController() && GameHUDClass)
+	// Add the HUD widget to the viewport
+	if (IsLocalPlayerController() && GameplayHUDClass)
 	{
-		UUserWidget* HUDWidget = CreateWidget<UUserWidget>(this, GameHUDClass);
+		UW_MSGameplayHUD* HUDWidget = CreateWidget<UW_MSGameplayHUD>(this, GameplayHUDClass);
 		if (HUDWidget)
 		{
 			HUDWidget->AddToViewport();
+			GameplayHUD = HUDWidget;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning,
+			       TEXT("AMSPlayerController: GameplayHUDClass is not valid! HUD will not be created."
+			       ));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AMSPlayerController: HUD will not be created."));
+	}
+}
+
+void AMSPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	UW_HealthBar* HealthBarWidget = GetGameHUD()->GetHealthBarWidget();
+
+	if (!HealthBarWidget)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AMSPlayerController: HealthBarWidget is not set!"));
+		return;
+	}
+	
+	// PlayerState is now guaranteed to be valid on the client.
+	if (PlayerState)
+	{
+		// Cast to your custom PlayerState
+		AMSPlayerState* MSPlayerState = Cast<AMSPlayerState>(PlayerState);
+        
+		// Call the widget's initialization function!
+		if (MSPlayerState && MSPlayerState->GetAbilitySystemComponent() && MSPlayerState->GetAttributeSet())
+		{
+			HealthBarWidget->InitializeWithAbilitySystem(
+				Cast<UMSAbilitySystemComponent>(MSPlayerState->GetAbilitySystemComponent()),
+				MSPlayerState->GetAttributeSet()
+			);
 		}
 	}
 }
 
-UUserWidget* AMSPlayerController::GetGameHUD() const
+UW_MSGameplayHUD* AMSPlayerController::GetGameHUD() const
 {
-	return GameHUD;
+	if (GameplayHUD)
+	{
+		return GameplayHUD;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning,
+				   TEXT("AMSPlayerController: GameHUD is not set! Returning nullptr."
+				   ));
+		return nullptr;
+	}
 }

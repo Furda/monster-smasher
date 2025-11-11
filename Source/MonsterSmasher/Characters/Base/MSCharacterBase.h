@@ -72,5 +72,5 @@ protected:
 
 	// --- Attribute Change Callbacks (to be overridden by derived classes) ---
 
-	void OnHealthChanged(const FOnAttributeChangeData& Data);
+	// virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 };

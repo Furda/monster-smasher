@@ -119,11 +119,12 @@ void AMSCharacterBase::InitAbilitySystemAndAttributes()
 		       *GetNameSafe(AbilitySystemComponent->GetOwnerActor()), *GetNameSafe(this));
 	}
 
-
+	// ----- Bind attributes are in the ASC Owner (PlayerState class) -----
+	
 	// Bind attribute change delegates on the ASC to character's callbacks.
 	// This is done on both server and client, as clients need UI updates.
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(
-		this, &AMSCharacterBase::OnHealthChanged);
+	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(
+	// 	this, &AMSCharacterBase::OnHealthChanged);
 	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxHealthAttribute()).AddUObject(this, &AMSCharacterBase::OnMaxHealthChanged);
 	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &AMSCharacterBase::OnStaminaChanged);
 	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxStaminaAttribute()).AddUObject(this, &AMSCharacterBase::OnMaxStaminaChanged);
@@ -192,8 +193,8 @@ void AMSCharacterBase::GrantStartingAbilities()
 
 // --- Attribute Change Callbacks (to be overridden by derived classes) ---
 
-void AMSCharacterBase::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-	// Default implementation does nothing. Derived classes can override to handle health changes.
-	// This is where you would update UI or trigger effects based on health changes.
-}
+// void AMSCharacterBase::OnHealthChanged(const FOnAttributeChangeData& Data)
+// {
+// 	// Default implementation does nothing. Derived classes can override to handle health changes.
+// 	// This is where you would update UI or trigger effects based on health changes.
+// }

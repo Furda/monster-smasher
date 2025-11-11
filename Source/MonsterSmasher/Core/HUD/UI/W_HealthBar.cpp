@@ -8,77 +8,50 @@
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
 
-void UW_HealthBar::NativeOnInitialized()
+void UW_HealthBar::NativeConstruct()
 {
-	Super::NativeOnInitialized();
-
-	UE_LOG(LogTemp, Warning, TEXT("UW_HealthBar::NativeOnInitialized Initializing Health Bar"));
-
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UW_HealthBar::NativeOnInitialized No PlayerController found!"));
-		return;
-	}
-
-	AMSPlayerCharacter* MSPlayerCharacter = Cast<AMSPlayerCharacter>(PC->GetPawn());
-	if (!MSPlayerCharacter)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UW_HealthBar::NativeOnInitialized No AMSPlayerCharacter found!"));
-		return;
-	}
-
-	UAbilitySystemComponent* ASC = MSPlayerCharacter->GetAbilitySystemComponent();
-	if (!ASC)
-	{
-		UE_LOG(LogTemp, Warning,
-		       TEXT("UW_HealthBar::NativeOnInitialized No AbilitySystemComponent found on PlayerCharacter!"));
-		return;
-	}
-
-	// Bind to health attribute delegate
-	ASC->GetGameplayAttributeValueChangeDelegate(UMSAttributeSet::GetHealthAttribute())
-	   .AddUObject(this, &UW_HealthBar::OnHealthChanged);
-
-	// Set initial value
-	UE_LOG(LogTemp, Warning, TEXT("UW_HealthBar::NativeOnInitialized Initializing Health Bar Values with attributes"));
-	const UMSAttributeSet* AttrSet = MSPlayerCharacter->GetAttributeSet();
-	UpdateHealthBar(AttrSet->GetHealth(), AttrSet->GetMaxHealth());
+	Super::NativeConstruct();
+	// Initial setup if needed
 }
 
 void UW_HealthBar::InitializeWithAbilitySystem(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes)
 {
+	UE_LOG(LogTemp, Warning, TEXT("UW_HealthBar::InitializeWithAbilitySystem"));
 	if (!InASC || !InAttributes)
 	{
 		return;
 	}
 
-	// Bind delegate
+	// cache references
+	CachedASC = InASC;
+	CachedAttributes = InAttributes;
+
+	// 1. Remove the previous binding if it exists
+	if (InASC->GetGameplayAttributeValueChangeDelegate(InAttributes->GetHealthAttribute()).IsBoundToObject(this))
+	{
+		InASC->GetGameplayAttributeValueChangeDelegate(InAttributes->GetHealthAttribute())
+			.RemoveAll(this);
+	}
+
+	// 2. Bind delegate
 	InASC->GetGameplayAttributeValueChangeDelegate(InAttributes->GetHealthAttribute())
 	     .AddUObject(this, &UW_HealthBar::OnHealthChanged);
 
 	UE_LOG(LogTemp, Warning,
-	       TEXT("UW_HealthBar::InitializeWithAbilitySystem Initializing Health Bar Values with attributes"));
-	// Force initial sync
+	       TEXT("UW_HealthBar::InitializeWithAbilitySystem Binding Delegates and setting initial values."));
+	
+	// 3. Force initial sync
 	UpdateHealthBar(InAttributes->GetHealth(), InAttributes->GetMaxHealth());
 }
 
 void UW_HealthBar::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
-	APlayerController* PC = GetOwningPlayer();
-	if (!PC)
+	if (!CachedAttributes)
 	{
 		return;
 	}
-
-	AMSPlayerCharacter* PlayerCharacter = Cast<AMSPlayerCharacter>(PC->GetPawn());
-	if (!PlayerCharacter)
-	{
-		return;
-	}
-
-	const UMSAttributeSet* AttrSet = PlayerCharacter->GetAttributeSet();
-	UpdateHealthBar(Data.NewValue, AttrSet->GetMaxHealth());
+	
+	UpdateHealthBar(Data.NewValue, CachedAttributes->GetMaxHealth());
 }
 
 void UW_HealthBar::UpdateHealthBar(float CurrentHealth, float MaxHealth)

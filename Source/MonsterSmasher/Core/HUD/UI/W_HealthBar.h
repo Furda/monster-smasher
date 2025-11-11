@@ -18,7 +18,7 @@ class MONSTERSMASHER_API UW_HealthBar : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	virtual void NativeOnInitialized() override;
+	virtual void NativeConstruct() override;
 
 	/** Initialize Health bar with ASC and attributes */
 	UFUNCTION(BlueprintCallable)
@@ -38,4 +38,10 @@ protected:
 	/** Text value of health */
 	UPROPERTY(meta = (BindWidgetOptional))
 	UTextBlock* HealthText;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UMSAbilitySystemComponent> CachedASC;
+	UPROPERTY()
+	TObjectPtr<UMSAttributeSet> CachedAttributes;
 };

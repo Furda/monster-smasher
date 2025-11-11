@@ -8,7 +8,7 @@
 
 class UMSAttributeSet;
 class UMSAbilitySystemComponent;
-class UW_MSHUD;
+class UW_MSGameplayHUD;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MONSTERSMASHER_API UHUDManagerComponent : public UActorComponent
@@ -27,7 +27,7 @@ public:
 
 	/** Reference to the HUD widget */
 	UPROPERTY()
-	UW_MSHUD* GameHUD;
+	UW_MSGameplayHUD* GameHUD;
 
 private:
 	/** Tracks if initialization was already done */

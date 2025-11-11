@@ -13,9 +13,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Core/PlayerController/MSPlayerController.h"
 #include "AbilitySystemComponent.h"
-#include "Core/HUD/HUDManagerComponent.h"
 #include "Core/HUD/UI/W_HealthBar.h"
-#include "Core/HUD/UI/W_MSHUD.h"
+#include "Core/HUD/UI/W_MSGameplayHUD.h"
 #include "Input/MSInputConfig.h"
 #include "Input/AbilityInputID.h"
 
@@ -57,9 +56,6 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// Note: The AbilitySystemComponent and AttributeSet will be owned by PlayerState as per our plan.
-
-	// Initialize the HUD Manager component
-	HUDManager = CreateDefaultSubobject<UHUDManagerComponent>(TEXT("HUDManager"));
 }
 
 void AMSPlayerCharacter::BeginPlay()
@@ -129,12 +125,6 @@ void AMSPlayerCharacter::InitAbilitySystemAndAttributes()
 {
 	// Call the base class to initialize the Ability System and Attributes
 	Super::InitAbilitySystemAndAttributes();
-
-	// Initialize the HUD Manager
-	if (HUDManager)
-	{
-		HUDManager->InitializeHUD(AbilitySystemComponent, AttributeSet);
-	}
 
 	// // Ensure we have a valid AbilitySystemComponent and AttributeSet
 	// if (!AbilitySystemComponent || !AttributeSet)
@@ -335,10 +325,9 @@ void AMSPlayerCharacter::Look(const FInputActionValue& Value)
 
 // Optional: Override attribute change callbacks for player-specific UI updates if needed.
 // For example, if your UI is only updated by the PlayerCharacter
-/*
-void AMSPlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
-{
-    Super::OnHealthChanged(Data); // Call base class to get logging
-    // Add UI update logic specific to player health bar here
-}
-*/
+// void AMSPlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+// {
+//     Super::OnHealthChanged(Data); // Call base class to get logging
+//     // Add UI update logic specific to player health bar here
+// }
+

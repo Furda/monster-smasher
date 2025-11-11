@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "W_MSHUD.generated.h"
+#include "W_MSGameplayHUD.generated.h"
 
 class UW_HealthBar;
 /**
  * 
  */
 UCLASS()
-class MONSTERSMASHER_API UW_MSHUD : public UUserWidget
+class MONSTERSMASHER_API UW_MSGameplayHUD : public UUserWidget
 {
 	GENERATED_BODY()
 
