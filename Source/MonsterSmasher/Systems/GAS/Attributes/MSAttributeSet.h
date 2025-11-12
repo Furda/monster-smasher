@@ -15,7 +15,8 @@ GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 /**
- * 
+ * UMSAttributeSet: Defines the primary attributes for the MonsterSmasher game.
+ * Includes Health and Stamina attributes along with their maximum and meta values.
  */
 UCLASS()
 class MONSTERSMASHER_API UMSAttributeSet : public UAttributeSet

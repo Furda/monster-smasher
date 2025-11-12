@@ -22,7 +22,7 @@ public:
 
 	/** Initialize Health bar with ASC and attributes */
 	UFUNCTION(BlueprintCallable)
-	void InitializeWithAbilitySystem(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes);
+	void InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes);
 
 	/** Called when health changes (bound to GAS attribute delegate) */
 	void OnHealthChanged(const FOnAttributeChangeData& Data);

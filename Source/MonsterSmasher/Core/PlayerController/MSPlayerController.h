@@ -8,11 +8,11 @@
 #include "Input/MSInputConfig.h"
 #include "MSPlayerController.generated.h"
 
-class UW_MSGameplayHUD;
+class UW_MSGameHUD;
 class UInputMappingContext;
 
 /**
- * 
+ * Manage HUD and Inputs
  */
 UCLASS()
 class MONSTERSMASHER_API AMSPlayerController : public AModularPlayerController
@@ -20,7 +20,7 @@ class MONSTERSMASHER_API AMSPlayerController : public AModularPlayerController
 	GENERATED_BODY()
 
 public:
-	UW_MSGameplayHUD* GetGameHUD() const;
+	UW_MSGameHUD* GetGameHUD() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -34,9 +34,9 @@ protected:
 
 	// --------------- HUD ---------------
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")
-	TSubclassOf<UUserWidget> GameplayHUDClass;
+	TSubclassOf<UW_MSGameHUD> GameHUDClass;
 
 private:
 	UPROPERTY()
-	TObjectPtr<UW_MSGameplayHUD> GameplayHUD;
+	TObjectPtr<UW_MSGameHUD> GameHUD;
 };

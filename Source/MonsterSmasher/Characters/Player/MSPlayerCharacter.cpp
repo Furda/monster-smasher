@@ -11,10 +11,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Components/CapsuleComponent.h"
-#include "Core/PlayerController/MSPlayerController.h"
 #include "AbilitySystemComponent.h"
-#include "Core/HUD/UI/W_HealthBar.h"
-#include "Core/HUD/UI/W_MSGameplayHUD.h"
 #include "Input/MSInputConfig.h"
 #include "Input/AbilityInputID.h"
 
@@ -98,69 +95,11 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 	Super::OnRep_PlayerState();
 }
 
-// void AMSPlayerCharacter::TryInitializeHUD()
-// {
-// 	if (AMSPlayerController* PC = Cast<AMSPlayerController>(GetController()))
-// 	{
-// 		if (UW_MSHUD* GameHUD = Cast<UW_MSHUD>(PC->GetGameHUD()))
-// 		{
-// 			if (UW_HealthBar* HealthBar = GameHUD->GetHealthBarWidget())
-// 			{
-// 				UE_LOG(LogTemp, Log, TEXT("HUD Retry: Initialized health bar successfully."));
-// 				HealthBar->InitializeWithAbilitySystem(AbilitySystemComponent, AttributeSet);
-// 			}
-// 			else
-// 			{
-// 				UE_LOG(LogTemp, Error, TEXT("AMSPlayerCharacter: Health bar widget not ready"));
-// 			}
-// 		}
-// 		else
-// 		{
-// 			UE_LOG(LogTemp, Warning, TEXT("AMSPlayerCharacter: GameHUD not ready."));
-// 		}
-// 	}
-// }
 
 void AMSPlayerCharacter::InitAbilitySystemAndAttributes()
 {
 	// Call the base class to initialize the Ability System and Attributes
 	Super::InitAbilitySystemAndAttributes();
-
-	// // Ensure we have a valid AbilitySystemComponent and AttributeSet
-	// if (!AbilitySystemComponent || !AttributeSet)
-	// {
-	// 	UE_LOG(LogTemp, Error,
-	// 	       TEXT("AMSPlayerCharacter: InitAbilitySystemAndAttributes failed! ASC or AttributeSet is null."));
-	// 	return;
-	// }
-	//
-	// AMSPlayerController* PC = Cast<AMSPlayerController>(GetController());
-	// if (!PC)
-	// {
-	// 	UE_LOG(LogTemp, Error, TEXT("AMSPlayerCharacter: InitAbilitySystemAndAttributes - No valid PlayerController!"));
-	// 	return;
-	// }
-	// UW_MSHUD* GameHUD = Cast<UW_MSHUD>(PC->GetGameHUD());
-	// if (!GameHUD)
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("GameHUD not ready, retrying..."));
-	// 	FTimerHandle TempHandle;
-	// 	GetWorldTimerManager().SetTimer(TempHandle, this, &AMSPlayerCharacter::TryInitializeHUD, 1.f, false);
-	// 	return;
-	// }
-	//
-	// UW_HealthBar* HealthBar = GameHUD->GetHealthBarWidget();
-	// if (HealthBar)
-	// {
-	// 	UE_LOG(LogTemp, Log,
-	// 	       TEXT("AMSPlayerCharacter: Initializing Health Bar with Ability System and Attributes."));
-	// 	// Initialize the health bar in the HUD with the Ability System and Attribute Set
-	// 	HealthBar->InitializeWithAbilitySystem(AbilitySystemComponent, AttributeSet);
-	// }
-	// else
-	// {
-	// 	UE_LOG(LogTemp, Warning, TEXT("AMSPlayerCharacter: HealthBar widget not found in HUD!"));
-	// }
 }
 
 // Grant Starting abilities by Ability Input Config

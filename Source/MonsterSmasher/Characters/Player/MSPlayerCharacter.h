@@ -7,7 +7,6 @@
 #include "MSPlayerCharacter.generated.h"
 
 
-class UHUDManagerComponent;
 class UCameraComponent;
 class USpringArmComponent;
 struct FInputActionValue;
@@ -37,10 +36,6 @@ public:
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaTime) override;
-
-	// --------------- HUD Initialization ---------------
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "UI")
-	UHUDManagerComponent* HUDManager;
 
 	// --------------- GAS Set up ---------------
 
@@ -105,5 +100,5 @@ protected:
 	// --------------- Attribute changes callback ---------------
 
 	// Attribute change callbacks (optional to override for player-specific UI updates)
-	//virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
+	// virtual void OnHealthChanged(const FOnAttributeChangeData& Data) override;
 };

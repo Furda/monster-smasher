@@ -14,9 +14,8 @@ void UW_HealthBar::NativeConstruct()
 	// Initial setup if needed
 }
 
-void UW_HealthBar::InitializeWithAbilitySystem(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes)
+void UW_HealthBar::InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes)
 {
-	UE_LOG(LogTemp, Warning, TEXT("UW_HealthBar::InitializeWithAbilitySystem"));
 	if (!InASC || !InAttributes)
 	{
 		return;
@@ -36,9 +35,6 @@ void UW_HealthBar::InitializeWithAbilitySystem(UMSAbilitySystemComponent* InASC,
 	// 2. Bind delegate
 	InASC->GetGameplayAttributeValueChangeDelegate(InAttributes->GetHealthAttribute())
 	     .AddUObject(this, &UW_HealthBar::OnHealthChanged);
-
-	UE_LOG(LogTemp, Warning,
-	       TEXT("UW_HealthBar::InitializeWithAbilitySystem Binding Delegates and setting initial values."));
 	
 	// 3. Force initial sync
 	UpdateHealthBar(InAttributes->GetHealth(), InAttributes->GetMaxHealth());
@@ -61,12 +57,14 @@ void UW_HealthBar::UpdateHealthBar(float CurrentHealth, float MaxHealth)
 	if (HealthBar)
 	{
 		HealthBar->SetPercent(Percent);
-		UE_LOG(LogTemp, Warning, TEXT("HealthBar: Set Percent to %f"), Percent);
 	}
 
 	if (HealthText)
 	{
-		HealthText->SetText(FText::AsNumber(FMath::RoundToInt(CurrentHealth)));
-		UE_LOG(LogTemp, Warning, TEXT("HealthBar: Set Text to %d"), FMath::RoundToInt(CurrentHealth));
+		HealthText->SetText(FText::Format(FText::FromStringView(TEXT("{Current} / {Max}")), FFormatNamedArguments{
+	{TEXT("Current"), FText::AsNumber(FMath::RoundToInt(CurrentHealth))},
+	{TEXT("Max"), FText::AsNumber(FMath::RoundToInt(MaxHealth))}
+		}));
+		
 	}
 }

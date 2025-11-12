@@ -47,14 +47,11 @@ void UMSAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 	{
 		const float NewHealth = FMath::Clamp(GetHealth() + GetMetaHealth(), 0.0f, GetMaxHealth());
 		SetHealth(NewHealth);
-		// UE_LOG(LogTemp, Log, TEXT("Health changed. Meta Health applied: %f, Current Health: %f"), GetMetaStamina(),
-		//        GetStamina());
+		UE_LOG(LogTemp, Log, TEXT("Health changed. Meta Health applied: %f, Current Health: %f"), GetMetaHealth(),
+		       GetHealth());
 
 		// Reset Meta Health to zero after applying
 		SetMetaHealth(0.0f);
-
-		// Broadcast health change if you have a delegate for UI updates
-		// OnHealthChanged.Broadcast(GetHealth(), GetMaxHealth()); // Example
 	}
 	// Handle Meta Stamina changes
 	else if (ModifiedAttribute == GetMetaStaminaAttribute())
@@ -66,9 +63,6 @@ void UMSAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 		// Reset Meta Stamina to zero after applying
 		SetMetaStamina(0.0f);
-
-		// Broadcast stamina change if you have a delegate for UI updates
-		// OnStaminaChanged.Broadcast(GetStamina(), GetMaxStamina()); // Example
 	}
 	// ... handle other attributes if needed
 }

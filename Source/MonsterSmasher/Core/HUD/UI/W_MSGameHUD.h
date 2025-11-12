@@ -4,14 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "W_MSGameplayHUD.generated.h"
+#include "W_MSGameHUD.generated.h"
 
-class UW_HealthBar;
+class UMSAttributeSet;
+class UMSAbilitySystemComponent;
+class UW_Vitals;
 /**
- * 
+ * Main HUD of the game
  */
 UCLASS()
-class MONSTERSMASHER_API UW_MSGameplayHUD : public UUserWidget
+class MONSTERSMASHER_API UW_MSGameHUD : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -19,12 +21,14 @@ public:
 	/** Called by PlayerController after widget is created */
 	virtual void NativeOnInitialized() override;
 
-	/** Expose access to sub-widgets if needed */
+	void InitializeHUDWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes) const;
+
+	/** Expose access to sub-widgets */
 	UFUNCTION(BlueprintCallable)
-	UW_HealthBar* GetHealthBarWidget() const;
+	UW_Vitals* GetVitalsWidget() const;
 
 protected:
 	/** Health Bar reference (must match widget name in Blueprint) */
 	UPROPERTY(meta = (BindWidget))
-	UW_HealthBar* HealthBar;
+	UW_Vitals* Vitals;
 };
