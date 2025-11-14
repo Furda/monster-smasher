@@ -41,14 +41,16 @@ void UMSAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 
 	// Get the Modified Attribute
 	FGameplayAttribute ModifiedAttribute = Data.EvaluatedData.Attribute;
+	
+	// The Data.OldValue here refers to the pre-GE attribute value.
 
 	// Handle Meta Health changes 
 	if (ModifiedAttribute == GetMetaHealthAttribute())
 	{
 		const float NewHealth = FMath::Clamp(GetHealth() + GetMetaHealth(), 0.0f, GetMaxHealth());
 		SetHealth(NewHealth);
-		UE_LOG(LogTemp, Log, TEXT("Health changed. Meta Health applied: %f, Current Health: %f"), GetMetaHealth(),
-		       GetHealth());
+		// UE_LOG(LogTemp, Log, TEXT("Health changed. Meta Health applied: %f, Current Health: %f"), GetMetaHealth(),
+		//        GetHealth());
 
 		// Reset Meta Health to zero after applying
 		SetMetaHealth(0.0f);

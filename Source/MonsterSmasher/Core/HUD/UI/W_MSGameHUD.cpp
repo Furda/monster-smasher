@@ -2,6 +2,7 @@
 
 
 #include "W_MSGameHUD.h"
+#include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "Vitals/W_Vitals.h"
 
 
@@ -14,6 +15,11 @@ void UW_MSGameHUD::NativeOnInitialized()
 
 void UW_MSGameHUD::InitializeHUDWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes) const
 {
+	if (!InASC || !InAttributes)
+	{
+		return;
+	}
+	
 	// Initialize HUD and Sub widgets
 	Vitals->InitializeWithGAS(InASC, InAttributes);
 }

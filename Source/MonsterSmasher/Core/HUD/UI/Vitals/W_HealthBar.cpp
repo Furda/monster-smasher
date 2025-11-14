@@ -20,7 +20,7 @@ void UW_HealthBar::InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSAttrib
 	{
 		return;
 	}
-
+	
 	// cache references
 	CachedASC = InASC;
 	CachedAttributes = InAttributes;
@@ -46,6 +46,8 @@ void UW_HealthBar::OnHealthChanged(const FOnAttributeChangeData& Data)
 	{
 		return;
 	}
+	
+	// UE_LOG(LogTemp, Warning, TEXT("Health Changed: %f"), Data.NewValue);
 	
 	UpdateHealthBar(Data.NewValue, CachedAttributes->GetMaxHealth());
 }

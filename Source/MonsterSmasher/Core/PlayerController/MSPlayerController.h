@@ -27,6 +27,7 @@ protected:
 
 	virtual void OnRep_PlayerState() override;
 	
+	
 	// --------------- Input Mapping ---------------
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Input)
@@ -35,6 +36,14 @@ protected:
 	// --------------- HUD ---------------
 	UPROPERTY(EditDefaultsOnly, Category = "HUD")
 	TSubclassOf<UW_MSGameHUD> GameHUDClass;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HUD")
+	bool bIsGameHUDInitialized = false;
+	
+	/** * Helper function to contain the common logic for initializing the HUD 
+	 * with GAS components. Called by both BeginPlay (Server/Host) and OnRep_PlayerState (Client).
+	 */
+	void TryInitializeHUDWithGAS();
 
 private:
 	UPROPERTY()
