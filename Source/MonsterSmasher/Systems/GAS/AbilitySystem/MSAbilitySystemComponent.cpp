@@ -106,6 +106,18 @@ UMSAbilitySystemComponent::UMSAbilitySystemComponent()
 // 	}
 // }
 
+void UMSAbilitySystemComponent::AbilityLocalInputPressed(int32 InputID)
+{
+	// Default implementation (call parent) to keep behavior
+	Super::AbilityLocalInputPressed(InputID);
+}	
+
+void UMSAbilitySystemComponent::AbilityLocalInputReleased(int32 InputID)
+{
+	// Default implementation (call parent) to keep behavior
+	Super::AbilityLocalInputReleased(InputID);
+}
+
 // This function is called every tick to process input
 // void UMSAbilitySystemComponent::ProcessAbilityInput(float DeltaTime, bool bGamePaused)
 // {

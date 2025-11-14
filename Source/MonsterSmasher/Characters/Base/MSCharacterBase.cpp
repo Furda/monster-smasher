@@ -108,27 +108,13 @@ void AMSCharacterBase::InitAbilitySystemAndAttributes()
 
 		// This flag ensures ApplyStartupGAS and future calls don't re-initialize.
 		bAbilitiesInitialized = true;
-
-		// UE_LOG(LogTemp, Warning, TEXT("AMSCharacterBase: InitAbilityActorInfo called. Owner: %s, Avatar: %s"),
-		//        *GetNameSafe(AbilitySystemComponent->GetOwnerActor()), *GetNameSafe(this));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log,
-		       TEXT("AMSCharacterBase: InitAbilityActorInfo skipped, AvatarActor already set. Owner: %s, Avatar: %s"),
-		       *GetNameSafe(AbilitySystemComponent->GetOwnerActor()), *GetNameSafe(this));
+		// UE_LOG(LogTemp, Log,
+		//        TEXT("AMSCharacterBase: InitAbilityActorInfo skipped, AvatarActor already set. Owner: %s, Avatar: %s"),
+		//        *GetNameSafe(AbilitySystemComponent->GetOwnerActor()), *GetNameSafe(this));
 	}
-
-	// ----- Bind attributes are in the ASC Owner (PlayerState class) -----
-	
-	// Bind attribute change delegates on the ASC to character's callbacks.
-	// This is done on both server and client, as clients need UI updates.
-	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(
-	// 	this, &AMSCharacterBase::OnHealthChanged);
-	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxHealthAttribute()).AddUObject(this, &AMSCharacterBase::OnMaxHealthChanged);
-	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &AMSCharacterBase::OnStaminaChanged);
-	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxStaminaAttribute()).AddUObject(this, &AMSCharacterBase::OnMaxStaminaChanged);
-	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMovementSpeedAttribute()).AddUObject(this, &AMSCharacterBase::OnMovementSpeedChanged);
 
 	// Apply default attributes and grant startup abilities.
 	// This should ONLY happen on the server, and only once.

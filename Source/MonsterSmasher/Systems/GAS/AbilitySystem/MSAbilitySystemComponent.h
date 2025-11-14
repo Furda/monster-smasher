@@ -29,6 +29,9 @@ public:
 	// Add custom methods for tag-based input.
 	// void AbilityInputTagPressed(const FGameplayTag& InputTag);
 	// void AbilityInputTagReleased(const FGameplayTag& InputTag);
+	
+	void AbilityLocalInputPressed(int32 InputID) override;
+	void AbilityLocalInputReleased(int32 InputID) override;
 
 	// Control input processing: Process spec handles
 	// It will be called from TickComponent.

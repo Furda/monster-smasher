@@ -164,7 +164,7 @@ void AMSPlayerCharacter::BindAbilityInput(UEnhancedInputComponent* EnhancedInput
 // 		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputTagReleased: %s"), *InputTag.ToString());
 //
 // 		// Call the custom input function on your ASC
-// 		MSASC->AbilityInputTagReleased(InputTag);
+// 		MSASC->AbilityLocalInputReleased(InputTag);
 // 	}
 // }
 
@@ -183,6 +183,7 @@ void AMSPlayerCharacter::AbilityInputIDReleased(EAbilityInputID InputID)
 	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
 	{
 		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputIDReleased: %s"), *UEnum::GetValueAsString(InputID));
+		
 		// Call the custom input function on your ASC
 		MSASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
 	}
@@ -259,14 +260,4 @@ void AMSPlayerCharacter::Look(const FInputActionValue& Value)
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
-
-// --------------- Attribute change callbacks ---------------
-
-// Optional: Override attribute change callbacks for player-specific UI updates if needed.
-// For example, if your UI is only updated by the PlayerCharacter
-// void AMSPlayerCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
-// {
-//     Super::OnHealthChanged(Data); // Call base class to get logging
-//     // Add UI update logic specific to player health bar here
-// }
 

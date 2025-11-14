@@ -26,8 +26,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	UMSAttributeSet* GetAttributeSet() const;
-
-	// Called by the PlayerState/GameMode to initialize this character's GAS components
+	
 	// This function should *not* directly initialize AbilityActorInfo for PlayerState-owned ASCs
 	// It's meant to get the ASC from the owner and set it as the character's reference
 	void InitAbilitySystemAndAttributes();

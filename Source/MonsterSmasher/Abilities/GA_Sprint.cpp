@@ -2,7 +2,7 @@
 
 
 #include "GA_Sprint.h"
-
+#include "GameplayEffectExtension.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
@@ -21,6 +21,14 @@ void UGA_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	// Commit the ability to ensure it can be used
+	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UGA_Sprint: CommitAbility failed!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+	
 	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (Character)
 	{
@@ -37,7 +45,7 @@ void UGA_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 				// Bind the callback function
 				WaitInputReleaseTask->OnRelease.AddDynamic(this, &UGA_Sprint::OnSprintInputReleased);
 				// Activate the task
-				WaitInputReleaseTask->Activate();
+				WaitInputReleaseTask->ReadyForActivation();
 			}
 		}
 		else
