@@ -88,12 +88,6 @@ void UGA_Block::OnBlockInputReleased(float TimeWaited)
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UGA_Block::OnMontageFinished()
-{
-    // Clean up and end the ability when the montage is done.
-    EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-}
-
 void UGA_Block::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
     // Prevent double-ending if possible
@@ -111,8 +105,6 @@ void UGA_Block::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamep
         
         // 2. Clear the handle
         BlockingEffectHandle.Invalidate();
-        
-        // 3. Stop Block Animation (Future step: Implement logic to stop the animation/pose)
     }
     
     // Call the super implementation last

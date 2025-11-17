@@ -6,6 +6,7 @@
 #include "GA_CombatBase.h"
 #include "GA_Block.generated.h"
 
+class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitInputRelease;
 /**
  * C++ implementation for the Block combat ability (hold-to-block).
@@ -26,10 +27,6 @@ public:
 	// Handle to the applied GE so we can remove it when the ability ends
 	FActiveGameplayEffectHandle BlockingEffectHandle;
 	
-	// Montage to play for the attack animation. Set this in the Blueprint child.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Block")
-	UAnimMontage* BlockMontage;
-	
 	// Keep a reference so the task isn't GC'd unexpectedly
 	UPROPERTY()
 	UAbilityTask_WaitInputRelease* WaitInputReleaseTaskInstance;
@@ -43,9 +40,4 @@ public:
 
 	// Called when the ability ends (e.g., when the input is released).
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
-
-protected:
-	// Called when the block montage finishes, is interrupted, or cancelled.
-	UFUNCTION()
-	void OnMontageFinished();
 };
