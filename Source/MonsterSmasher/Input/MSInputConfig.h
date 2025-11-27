@@ -20,7 +20,7 @@ struct FMSInputAction
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<const UInputAction> InputAction = nullptr;
 
-	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "InputTag"))
+	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "InputTag,Ability"))
 	FGameplayTag InputTag;
 
 	UPROPERTY(EditDefaultsOnly)

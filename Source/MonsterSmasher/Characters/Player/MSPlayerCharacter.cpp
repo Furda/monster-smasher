@@ -14,11 +14,18 @@
 #include "AbilitySystemComponent.h"
 #include "Input/MSInputConfig.h"
 #include "Input/AbilityInputID.h"
+#include "Weapons/WeaponManagerComponent.h"
 
+
+// =======================
+// Set up and overrides
+// =======================
 
 AMSPlayerCharacter::AMSPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// ----- Initialize Character collision and movement -----
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -40,6 +47,8 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
+	// ---- Initialize Camera Components ----
+
 	// Create a camera boom (pulls in towards the player if there's a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -53,6 +62,11 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 	// Note: The AbilitySystemComponent and AttributeSet will be owned by PlayerState as per our plan.
+
+	// ----- Initialize the Weapon Manager Component -----
+
+	// NOTE: This might need to change when we create the Combat Component since the weapon manager component could live inside the combat component
+	WeaponManager = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
 }
 
 void AMSPlayerCharacter::BeginPlay()
@@ -68,23 +82,6 @@ void AMSPlayerCharacter::Tick(float DeltaTime)
 	// For GAS, most logic is handled by the AbilitySystemComponent.
 }
 
-// --------------- GAS Set up ---------------
-
-UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
-{
-	// Retrieve the PlayerState from the character, cast it to your custom player state,
-	// and then get its AbilitySystemComponent.
-	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
-	return (PS ? PS->GetAbilitySystemComponent() : nullptr);
-}
-
-UMSAttributeSet* AMSPlayerCharacter::GetAttributeSet() const
-{
-	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
-	return (PS ? PS->GetAttributeSet() : nullptr);
-}
-
-
 void AMSPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -96,100 +93,9 @@ void AMSPlayerCharacter::OnRep_PlayerState()
 }
 
 
-void AMSPlayerCharacter::InitAbilitySystemAndAttributes()
-{
-	// Call the base class to initialize the Ability System and Attributes
-	Super::InitAbilitySystemAndAttributes();
-}
-
-// Grant Starting abilities by Ability Input Config
-void AMSPlayerCharacter::GrantStartingAbilities()
-{
-	// Grant default attributes if the ASC is valid and is in the server
-	if (!AbilitySystemComponent || !HasAuthority() || !AbilityInputConfig)
-	{
-		if (!AbilityInputConfig)
-		{
-			UE_LOG(LogTemp, Error, TEXT("AMSPlayerCharacter::GrantStartingAbilities - AbilityInputConfig is null!"));
-		}
-		return;
-	}
-
-	// Use custom Ability granting from the custom ASC
-	AbilitySystemComponent->GiveAbilitiesFromInputConfig(AbilityInputConfig, this);
-
-	UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: Granted startup abilities from AbilityInputConfig."));
-}
-
-
-// --------------- Ability Binding ---------------
-
-void AMSPlayerCharacter::BindAbilityInput(UEnhancedInputComponent* EnhancedInputComponent)
-{
-	if (!AbilityInputConfig)
-	{
-		UE_LOG(LogTemp, Error, TEXT("AMSPlayerCharacter: Missing AbilityInputConfig! Cannot bind ability inputs."));
-		return;
-	}
-
-	for (const FMSInputAction& Action : AbilityInputConfig->AbilityInputActions)
-	{
-		if (Action.InputAction && Action.InputTag.IsValid())
-		{
-			// Bind the Pressed event (ETriggerEvent::Started)
-			EnhancedInputComponent->BindAction(Action.InputAction, ETriggerEvent::Started, this,
-			                                   &AMSPlayerCharacter::AbilityInputIDPressed, Action.InputID);
-
-			// Bind the Released event (ETriggerEvent::Completed)
-			EnhancedInputComponent->BindAction(Action.InputAction, ETriggerEvent::Completed, this,
-			                                   &AMSPlayerCharacter::AbilityInputIDReleased, Action.InputID);
-		}
-	}
-}
-
-// void AMSPlayerCharacter::AbilityInputTagPressed(FGameplayTag InputTag)
-// {
-// 	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
-// 	{
-// 		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputTagPressed: %s"), *InputTag.ToString());
-// 		// Call the custom input function on your ASC
-// 		MSASC->AbilityInputTagPressed(InputTag);
-// 	}
-// }
-
-// void AMSPlayerCharacter::AbilityInputTagReleased(FGameplayTag InputTag)
-// {
-// 	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
-// 	{
-// 		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputTagReleased: %s"), *InputTag.ToString());
-//
-// 		// Call the custom input function on your ASC
-// 		MSASC->AbilityLocalInputReleased(InputTag);
-// 	}
-// }
-
-void AMSPlayerCharacter::AbilityInputIDPressed(EAbilityInputID InputID)
-{
-	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
-	{
-		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputIDPressed: %s"), *UEnum::GetValueAsString(InputID));
-		// Call the custom input function on your ASC
-		MSASC->AbilityLocalInputPressed(static_cast<int32>(InputID));
-	}
-}
-
-void AMSPlayerCharacter::AbilityInputIDReleased(EAbilityInputID InputID)
-{
-	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
-	{
-		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputIDReleased: %s"), *UEnum::GetValueAsString(InputID));
-		
-		// Call the custom input function on your ASC
-		MSASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
-	}
-}
-
-// -------------- Basic movement Set up ---------------
+// =======================
+// Basic movement set up
+// =======================
 
 void AMSPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -258,6 +164,118 @@ void AMSPlayerCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+
+// =======================
+// GAS Set up and overrides
+// =======================
+
+UAbilitySystemComponent* AMSPlayerCharacter::GetAbilitySystemComponent() const
+{
+	// Retrieve the PlayerState from the character, cast it to your custom player state,
+	// and then get its AbilitySystemComponent.
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	return (PS ? PS->GetAbilitySystemComponent() : nullptr);
+}
+
+UMSAttributeSet* AMSPlayerCharacter::GetAttributeSet() const
+{
+	AMSPlayerState* PS = GetPlayerState<AMSPlayerState>();
+	return (PS ? PS->GetAttributeSet() : nullptr);
+}
+
+void AMSPlayerCharacter::InitAbilitySystemAndAttributes()
+{
+	// Call the base class to initialize the Ability System and Attributes
+	Super::InitAbilitySystemAndAttributes();
+}
+
+// Grant Starting abilities by Ability Input Config
+void AMSPlayerCharacter::GrantStartingAbilities()
+{
+	// Grant default attributes if the ASC is valid and is in the server
+	if (!AbilitySystemComponent || !HasAuthority() || !AbilityInputConfig)
+	{
+		if (!AbilityInputConfig)
+		{
+			UE_LOG(LogTemp, Error, TEXT("AMSPlayerCharacter::GrantStartingAbilities - AbilityInputConfig is null!"));
+		}
+		return;
+	}
+
+	// Use custom Ability granting from the custom ASC
+	AbilitySystemComponent->GiveAbilitiesFromInputConfig(AbilityInputConfig, this);
+}
+
+
+// =======================
+// Ability Binding
+// =======================
+
+void AMSPlayerCharacter::BindAbilityInput(UEnhancedInputComponent* EnhancedInputComponent)
+{
+	if (!AbilityInputConfig)
+	{
+		UE_LOG(LogTemp, Error, TEXT("AMSPlayerCharacter: Missing AbilityInputConfig! Cannot bind ability inputs."));
+		return;
+	}
+
+	for (const FMSInputAction& Action : AbilityInputConfig->AbilityInputActions)
+	{
+		if (Action.InputAction && Action.InputTag.IsValid())
+		{
+			// Bind the Pressed event (ETriggerEvent::Started)
+			EnhancedInputComponent->BindAction(Action.InputAction, ETriggerEvent::Started, this,
+			                                   &AMSPlayerCharacter::AbilityInputIDPressed, Action.InputID);
+
+			// Bind the Released event (ETriggerEvent::Completed)
+			EnhancedInputComponent->BindAction(Action.InputAction, ETriggerEvent::Completed, this,
+			                                   &AMSPlayerCharacter::AbilityInputIDReleased, Action.InputID);
+		}
+	}
+}
+
+// void AMSPlayerCharacter::AbilityInputTagPressed(FGameplayTag InputTag)
+// {
+// 	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
+// 	{
+// 		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputTagPressed: %s"), *InputTag.ToString());
+// 		// Call the custom input function on your ASC
+// 		MSASC->AbilityInputTagPressed(InputTag);
+// 	}
+// }
+
+// void AMSPlayerCharacter::AbilityInputTagReleased(FGameplayTag InputTag)
+// {
+// 	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
+// 	{
+// 		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputTagReleased: %s"), *InputTag.ToString());
+//
+// 		// Call the custom input function on your ASC
+// 		MSASC->AbilityLocalInputReleased(InputTag);
+// 	}
+// }
+
+void AMSPlayerCharacter::AbilityInputIDPressed(EAbilityInputID InputID)
+{
+	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputIDPressed: %s"), *UEnum::GetValueAsString(InputID));
+		// Call the custom input function on your ASC
+		MSASC->AbilityLocalInputPressed(static_cast<int32>(InputID));
+	}
+}
+
+void AMSPlayerCharacter::AbilityInputIDReleased(EAbilityInputID InputID)
+{
+	if (UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		UE_LOG(LogTemp, Log, TEXT("AMSPlayerCharacter: AbilityInputIDReleased: %s"), *UEnum::GetValueAsString(InputID));
+
+		// Call the custom input function on your ASC
+		MSASC->AbilityLocalInputReleased(static_cast<int32>(InputID));
 	}
 }
 

@@ -21,8 +21,7 @@ void UMSGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	// Add common activation logic here if needed for all abilities.
-	// For now, it just calls the base. Blueprints will override this.
-	UE_LOG(LogTemp, Log, TEXT("UMSGameplayAbility ActivateAbility: %s"), *GetName());
+	// UE_LOG(LogTemp, Log, TEXT("UMSGameplayAbility ActivateAbility: %s"), *GetName());
 }
 
 void UMSGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -31,8 +30,7 @@ void UMSGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, con
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
-	UE_LOG(LogTemp, Log, TEXT("UMSGameplayAbility Ended: %s (Was Cancelled: %s)"), *GetName(),
-	       bWasCancelled ? TEXT("True") : TEXT("False"));
+	// UE_LOG(LogTemp, Log, TEXT("UMSGameplayAbility Ended: %s (Was Cancelled: %s)"), *GetName(), bWasCancelled ? TEXT("True") : TEXT("False"));
 
 	// Final cleanup logic here.
 }

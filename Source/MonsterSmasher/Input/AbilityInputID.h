@@ -52,7 +52,11 @@ enum class EAbilityInputID : uint8
 	// 12: Specific Ability Slot 4 (e.g., R ability)
 	Ability4,
 
-	// Any other specific input IDs you might need
+	// 13: Equip Weapon
+	EquipWeapon,
+
+	// 14: Equip Weapon
+	UnequipWeapon,
 
 	Max // Keep this as the last entry, useful for iteration or array sizing
 };

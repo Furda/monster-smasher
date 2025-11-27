@@ -3,11 +3,12 @@
 
 #include "GA_Jump.h"
 #include "GameFramework/Character.h"
+#include "GameplayTags/MyNativeGameplayTags.h"
 
 UGA_Jump::UGA_Jump()
 {
 	ActivationPolicy = EMSAbilityActivationPolicy::OnInputTriggered;
-	SetAssetTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("InputTag.Jump"))));
+	SetAssetTags(FGameplayTagContainer(TAG_InputTag_Jump));
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 

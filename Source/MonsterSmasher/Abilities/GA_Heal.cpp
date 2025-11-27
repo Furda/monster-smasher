@@ -4,18 +4,14 @@
 #include "GA_Heal.h"
 #include "Characters/Base/MSCharacterBase.h"
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
+#include "GameplayTags/MyNativeGameplayTags.h"
 
 UGA_Heal::UGA_Heal()
 {
 	ActivationPolicy = EMSAbilityActivationPolicy::OnInputTriggered;
-	SetAssetTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("Ability.Utility.Heal"))));
+	SetAssetTags(FGameplayTagContainer(TAG_Ability_Utility_Heal));
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 }
-
-// UGameplayEffect* UGA_Heal::GetCooldownGameplayEffect() const
-// {
-// 	return CooldownGameplayEffectClass ? CooldownGameplayEffectClass->GetDefaultObject<UGameplayEffect>() : nullptr;
-// }
 
 void UGA_Heal::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
                                const FGameplayAbilityActivationInfo ActivationInfo,

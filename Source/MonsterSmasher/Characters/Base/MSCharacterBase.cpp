@@ -6,6 +6,10 @@
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
 
 
+// =======================
+// Set up and overrides
+// =======================
+
 AMSCharacterBase::AMSCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = true; // Character can tick
@@ -16,16 +20,6 @@ void AMSCharacterBase::BeginPlay()
 	Super::BeginPlay();
 }
 
-UAbilitySystemComponent* AMSCharacterBase::GetAbilitySystemComponent() const
-{
-	return AbilitySystemComponent;
-}
-
-UMSAttributeSet* AMSCharacterBase::GetAttributeSet() const
-{
-	return AttributeSet;
-}
-
 void AMSCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -33,18 +27,6 @@ void AMSCharacterBase::PossessedBy(AController* NewController)
 	// SERVER ONLY: Initialize GAS for the server's PlayerState and Character
 	// This handles the server-side authoritative setup.
 	InitAbilitySystemAndAttributes();
-
-	// if (HasAuthority() && IsValid(NewController))
-	// {
-	// 	if (AMSPlayerState* PS = GetPlayerState<AMSPlayerState>())
-	// 	{
-	// 		// Set the AvatarActor in the PlayerState's ASC
-	// 		PS->InitAbilitySystemAndAttributes();
-	//
-	// 		// Then set the character's local reference
-	// 		InitAbilitySystemAndAttributes(); // This sets the character's AbilitySystemComponent pointer
-	// 	}
-	// }
 }
 
 void AMSCharacterBase::OnRep_PlayerState()
@@ -54,15 +36,21 @@ void AMSCharacterBase::OnRep_PlayerState()
 	// CLIENT ONLY: Initialize GAS for the client's PlayerState and Character
 	// This is called when the client's PlayerState is replicated and ready.
 	InitAbilitySystemAndAttributes();
+}
 
-	// if (AMSPlayerState* MSPS = GetPlayerState<AMSPlayerState>()) // GetPlayerState() handles client/server differences
-	// {
-	// 	// Set the AvatarActor in the PlayerState's ASC on the client
-	// 	MSPS->InitAbilitySystemAndAttributes();
-	//
-	// 	// Then set the character's local reference
-	// 	InitAbilitySystemAndAttributes(); // This sets the character's AbilitySystemComponent pointer
-	// }
+
+// =======================
+// GAS Set up and overrides
+// =======================
+
+UAbilitySystemComponent* AMSCharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UMSAttributeSet* AMSCharacterBase::GetAttributeSet() const
+{
+	return AttributeSet;
 }
 
 // Init Ability System Component and attributes for the character
@@ -98,12 +86,8 @@ void AMSCharacterBase::InitAbilitySystemAndAttributes()
 
 	// Check if InitAbilityActorInfo needs to be called.
 	// It should be called once per actor on both server and client.
-	// GetAvatarActor() == this: Means this character is already the avatar for this ASC.
-	// This is the most reliable check to avoid redundant InitAbilityActorInfo calls.
 	if (AbilitySystemComponent->GetAvatarActor() != this)
 	{
-		// The OwnerActor is the one that *owns* the ASC (e.g., PlayerState or the Character itself).
-		// The AvatarActor is the one the abilities *act on* (e.g., the Character).
 		AbilitySystemComponent->InitAbilityActorInfo(AbilitySystemComponent->GetOwnerActor(), this);
 
 		// This flag ensures ApplyStartupGAS and future calls don't re-initialize.
@@ -135,6 +119,11 @@ void AMSCharacterBase::ApplyStartupGAS()
 	}
 }
 
+
+// =======================
+// Ability Granting (to be overridden by derived classes)
+// =======================
+
 // Grant Default/Starting attributes to the character
 void AMSCharacterBase::GrantStartingAttributes()
 {
@@ -165,7 +154,6 @@ void AMSCharacterBase::GrantStartingAttributes()
 	}
 }
 
-
 // Grant Default/Starting abilities to the character
 // Default implementation does nothing. Derived classes will override.
 void AMSCharacterBase::GrantStartingAbilities()
@@ -177,7 +165,10 @@ void AMSCharacterBase::GrantStartingAbilities()
 	       ));
 }
 
-// --- Attribute Change Callbacks (to be overridden by derived classes) ---
+
+// =======================
+// Attribute Change Callbacks (to be overridden by derived classes)
+// =======================
 
 // void AMSCharacterBase::OnHealthChanged(const FOnAttributeChangeData& Data)
 // {

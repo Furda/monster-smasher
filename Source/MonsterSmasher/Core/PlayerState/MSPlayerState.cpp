@@ -6,6 +6,10 @@
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
 
 
+// =======================
+// Set up and overrides
+// =======================
+
 AMSPlayerState::AMSPlayerState()
 {
 	// Ensure PlayerState replicates to all clients for multiplayer setup
@@ -25,16 +29,6 @@ AMSPlayerState::AMSPlayerState()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-UAbilitySystemComponent* AMSPlayerState::GetAbilitySystemComponent() const
-{
-	return AbilitySystemComponent;
-}
-
-UMSAttributeSet* AMSPlayerState::GetAttributeSet() const
-{
-	return AttributeSet;
-}
-
 void AMSPlayerState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -49,6 +43,21 @@ void AMSPlayerState::Tick(float DeltaTime)
 
 	// You can add any per-tick logic here if needed.
 	// For GAS, most logic is handled by the AbilitySystemComponent.
+}
+
+
+// =======================
+// GAS Set up and overrides
+// =======================
+
+UAbilitySystemComponent* AMSPlayerState::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UMSAttributeSet* AMSPlayerState::GetAttributeSet() const
+{
+	return AttributeSet;
 }
 
 void AMSPlayerState::InitAbilitySystemAndAttributes()
@@ -95,7 +104,10 @@ void AMSPlayerState::InitAbilitySystemAndAttributes()
 	
 }
 
-// --- Attribute Change Callbacks (to be overridden by derived classes) ---
+
+// =======================
+// Attribute Change Callbacks
+// =======================
 
 void AMSPlayerState::OnHealthChanged(const FOnAttributeChangeData& Data)
 {

@@ -6,11 +6,12 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Abilities/Tasks/AbilityTask_WaitInputRelease.h"
+#include "GameplayTags/MyNativeGameplayTags.h"
 
 UGA_Sprint::UGA_Sprint()
 {
 	ActivationPolicy = EMSAbilityActivationPolicy::WhileInputActive;
-	SetAssetTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("InputTag.Sprint"))));
+	SetAssetTags(FGameplayTagContainer(TAG_InputTag_Sprint));
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
@@ -28,7 +29,7 @@ void UGA_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
-	
+
 	ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get());
 	if (Character)
 	{

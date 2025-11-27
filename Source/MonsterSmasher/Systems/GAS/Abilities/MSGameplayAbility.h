@@ -35,30 +35,29 @@ class MONSTERSMASHER_API UMSGameplayAbility : public UGameplayAbility
 public:
 	UMSGameplayAbility();
 
-	// The activation policy for this ability.
 	// This dictates when and how the ability attempts to activate based on input.
+	// NOTE: This does nothing right now
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability Activation")
 	EMSAbilityActivationPolicy ActivationPolicy;
 
 	// Getter for the activation policy
 	EMSAbilityActivationPolicy GetActivationPolicy() const { return ActivationPolicy; }
 
+	// Determine if this ability should be shown in the skill bar UI
+	// This can be used by UI systems to filter and display abilities appropriately.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	bool bShouldShowInSkillBar = false;
+
 protected:
-	// Override the core OnActivateAbility function.
-	// This is where most of your ability logic will start.
-	// It's a good place for initial setup or to kick off Ability Tasks.
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                             const FGameplayAbilityActivationInfo ActivationInfo,
 	                             const FGameplayEventData* TriggerEventData) override;
 
-	// Override the core OnAbilityCancelled function.
 	// Called when the ability is cancelled for any reason (e.g., stun, new ability overriding it).
 	// virtual void OnAbilityCancelled(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	//                                 const FGameplayAbilityActivationInfo ActivationInfo) override;
 
-	// Override the core OnAbilityEnded function.
-	// Called when the ability ends (successfully, cancelled, or failed).
-	// This is where you'd clean up any lingering effects or state changes.
+	// This is where we clean up any lingering effects or state changes.
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                        const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
 	                        bool bWasCancelled) override;

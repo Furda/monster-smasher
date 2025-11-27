@@ -6,12 +6,13 @@
 #include "AbilitySystemComponent.h"
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
 #include "AbilitySystemBlueprintLibrary.h" // For GetFloatAttribute
+#include "GameplayTags/MyNativeGameplayTags.h"
 
 
 UGA_Dodge::UGA_Dodge()
 {
 	ActivationPolicy = EMSAbilityActivationPolicy::OnInputTriggered;
-	SetAssetTags(FGameplayTagContainer(FGameplayTag::RequestGameplayTag(TEXT("InputTag.Dodge"))));
+	SetAssetTags(FGameplayTagContainer(TAG_InputTag_Dodge));
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerExecution;
 }
 
