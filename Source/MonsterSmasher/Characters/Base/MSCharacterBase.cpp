@@ -2,8 +2,13 @@
 
 
 #include "MSCharacterBase.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayTags/MyNativeGameplayTags.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 
 // =======================
@@ -44,6 +49,11 @@ void AMSCharacterBase::OnRep_PlayerState()
 // =======================
 
 UAbilitySystemComponent* AMSCharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+UMSAbilitySystemComponent* AMSCharacterBase::GetMSAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
@@ -102,16 +112,6 @@ void AMSCharacterBase::InitAbilitySystemAndAttributes()
 
 	// Apply default attributes and grant startup abilities.
 	// This should ONLY happen on the server, and only once.
-	if (HasAuthority())
-	{
-		ApplyStartupGAS();
-	}
-}
-
-void AMSCharacterBase::ApplyStartupGAS()
-{
-	// This function ensures the startup process happens exactly once on the server.
-	// It calls the virtual functions to grant attributes and abilities.
 	if (HasAuthority() && AbilitySystemComponent && AbilitySystemComponent->GetAvatarActor() == this)
 	{
 		GrantStartingAttributes();
@@ -154,24 +154,82 @@ void AMSCharacterBase::GrantStartingAttributes()
 	}
 }
 
-// Grant Default/Starting abilities to the character
-// Default implementation does nothing. Derived classes will override.
+
+// This method offer general functionality, but derived classes should override this method
 void AMSCharacterBase::GrantStartingAbilities()
 {
-	// Default implementation does nothing. Derived classes MUST override this.
-	UE_LOG(LogTemp, Error,
-	       TEXT(
-		       "AMSCharacterBase::GrantStartingAbilities - Base implementation called. Derived class MUST override this!"
-	       ));
+	if (!AbilitySystemComponent || !HasAuthority())
+	{
+		return;
+	}
+
+	if (StartingAbilities.Num() <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AMSCharacterBase::GrantStartingAbilities - StartingAbilities is empty!"));
+		return;
+	}
+
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : StartingAbilities)
+	{
+		// TODO: Change to support the ability tag
+		FGameplayAbilitySpecHandle AbilitySpecHandle = AbilitySystemComponent->GiveAbility(
+			FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE));
+
+		GrantedAbilities.Add(AbilitySpecHandle);
+	}
+
+	SendAbilitiesChangedEvent();
+}
+
+TArray<FGameplayAbilitySpecHandle> AMSCharacterBase::GrantAbilities(
+	TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant)
+{
+	if (!AbilitySystemComponent || !HasAuthority())
+	{
+		return TArray<FGameplayAbilitySpecHandle>();
+	}
+
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilitiesHandles;
+
+
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : AbilitiesToGrant)
+	{
+		// TODO: Change to support the ability tag
+		FGameplayAbilitySpecHandle AbilitySpecHandle = AbilitySystemComponent->GiveAbility(
+			FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE));
+
+		GrantedAbilitiesHandles.Add(AbilitySpecHandle);
+		UE_LOG(LogTemp, Warning, TEXT("Granted ability: %s"), *AbilityClass->GetName());
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Granted abilities: %d"), GrantedAbilitiesHandles.Num());
+
+	SendAbilitiesChangedEvent();
+	return GrantedAbilitiesHandles;
 }
 
 
-// =======================
-// Attribute Change Callbacks (to be overridden by derived classes)
-// =======================
+void AMSCharacterBase::RemoveAbilities(TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove)
+{
+	if (!AbilitySystemComponent || !HasAuthority())
+	{
+		return;
+	}
 
-// void AMSCharacterBase::OnHealthChanged(const FOnAttributeChangeData& Data)
-// {
-// 	// Default implementation does nothing. Derived classes can override to handle health changes.
-// 	// This is where you would update UI or trigger effects based on health changes.
-// }
+	for (const FGameplayAbilitySpecHandle AbilitySpecHandle : AbilitiesToRemove)
+	{
+		AbilitySystemComponent->ClearAbility(AbilitySpecHandle);
+	}
+
+	SendAbilitiesChangedEvent();
+}
+
+void AMSCharacterBase::SendAbilitiesChangedEvent()
+{
+	FGameplayEventData EventData;
+	EventData.EventTag = TAG_Event_Abilities_Changed;
+	EventData.Instigator = this;
+	EventData.Target = this;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventData.EventTag, EventData);
+}

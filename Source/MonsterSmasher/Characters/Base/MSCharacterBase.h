@@ -8,6 +8,7 @@
 #include "GameplayEffectTypes.h"
 #include "MSCharacterBase.generated.h"
 
+struct FGameplayAbilitySpecHandle;
 class UHealthBarComponent;
 class UGameplayAbility;
 class UGameplayEffect;
@@ -18,14 +19,14 @@ UCLASS(Abstract) // Make this class abstract as it should not be instantiated di
 class MONSTERSMASHER_API AMSCharacterBase : public AModularCharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	
+
 	// =======================
 	// Set up and overrides
 	// =======================
-	
+
 public:
 	AMSCharacterBase();
-	
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -35,12 +36,14 @@ protected:
 
 	// Called on clients when the PlayerState is replicated
 	virtual void OnRep_PlayerState() override;
-	
+
 	// =======================
 	// GAS Set up and overrides
 	// =======================
+
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UMSAbilitySystemComponent* GetMSAbilitySystemComponent() const;
 	virtual UMSAttributeSet* GetAttributeSet() const;
 
 protected:
@@ -50,13 +53,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "GAS | Attributes")
 	TObjectPtr<UMSAttributeSet> AttributeSet;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS | Attributes")
-	TSubclassOf<UGameplayEffect> DefaultAttributesEffect;
-
-	// TODO: Check if this property is needed
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS | Abilities")
-	TArray<TSubclassOf<UGameplayAbility>> StartingAbilities;
-
 	// Flag to ensure InitAbilityActorInfo and ApplyStartupGAS are called only once.
 	UPROPERTY(Transient) // Transient: Not saved to disk, cleared on load
 	bool bAbilitiesInitialized = false;
@@ -64,20 +60,33 @@ protected:
 	// GAS init helper
 	virtual void InitAbilitySystemAndAttributes();
 
-	// Character-specific startup GAS application
-	// i.e. Grant Starting Attributes and Abilities...
-	virtual void ApplyStartupGAS();
-	
+
 	// =======================
 	// Ability Granting (to be overridden by derived classes)
 	// =======================
+public:
+	virtual TArray<FGameplayAbilitySpecHandle> GrantAbilities(TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant);
+	virtual void RemoveAbilities(TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS | Attributes")
+	TSubclassOf<UGameplayEffect> DefaultAttributesEffect;
+
+	// TODO: Change to ability sets
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS | Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartingAbilities;
+
+	UPROPERTY(BlueprintReadOnly, Category = "GAS | Abilities")
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 
 	// Grant Default/Starting attributes to the character
 	virtual void GrantStartingAttributes();
 
-	// Grant Default/Starting abilities to the character
+	// TODO: Change logic of granting and removing abilities to ability sets
 	virtual void GrantStartingAbilities();
-	
+	virtual void SendAbilitiesChangedEvent();
+
+
 	// =======================
 	// Attribute Change Callbacks (to be overridden by derived classes)
 	// =======================

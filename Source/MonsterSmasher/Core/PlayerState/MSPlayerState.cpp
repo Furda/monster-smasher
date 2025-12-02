@@ -55,6 +55,11 @@ UAbilitySystemComponent* AMSPlayerState::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+UMSAbilitySystemComponent* AMSPlayerState::GetMSAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
 UMSAttributeSet* AMSPlayerState::GetAttributeSet() const
 {
 	return AttributeSet;
@@ -83,16 +88,15 @@ void AMSPlayerState::InitAbilitySystemAndAttributes()
 		UE_LOG(LogTemp, Log,
 		       TEXT("AMSPlayerState::InitAbilitySystemAndAttributes: GAS Initialized. Owner: %s, Avatar: %s"),
 		       *GetNameSafe(this), *GetNameSafe(CharacterPawn));
-		
 	}
 	else
 	{
 		UE_LOG(LogTemp, Log,
-			   TEXT(
-				   "AMSPlayerState::InitAbilitySystemAndAttributes: Character Pawn is NULL. Will re-attempt when possessed."
-			   ));
+		       TEXT(
+			       "AMSPlayerState::InitAbilitySystemAndAttributes: Character Pawn is NULL. Will re-attempt when possessed."
+		       ));
 	}
-	
+
 	// Bind attribute change delegates on the ASC to character's callbacks.
 	// This is done on both server and client, as clients need UI updates.
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(
@@ -101,7 +105,6 @@ void AMSPlayerState::InitAbilitySystemAndAttributes()
 	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetStaminaAttribute()).AddUObject(this, &AMSCharacterBase::OnStaminaChanged);
 	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxStaminaAttribute()).AddUObject(this, &AMSCharacterBase::OnMaxStaminaChanged);
 	// AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMovementSpeedAttribute()).AddUObject(this, &AMSCharacterBase::OnMovementSpeedChanged);
-	
 }
 
 

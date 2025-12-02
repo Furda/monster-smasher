@@ -106,6 +106,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_ComboWindow_Close);
 // Ability Events
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Ability_Activated);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Ability_Ended);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Abilities_Changed);
 
 // Weapon Events
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Weapon_Equip);

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpecHandle.h"
 #include "Components/ActorComponent.h"
 #include "GameFramework/Character.h" // The use of character can change to the combat component
 #include "GameplayTagContainer.h"
@@ -47,11 +48,14 @@ public:
 	TArray<TSubclassOf<AWeaponBase>> AvailableWeapons;
 
 protected:
+	UPROPERTY(BlueprintReadOnly, Category = "Weapons | Abilities")
+	TArray<FGameplayAbilitySpecHandle> AbilitiesGrantedByWeapon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unarmed Properties")
 	FWeaponConfig UnarmedConfig;
 
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "References")
-	TObjectPtr<ACharacter> OwningCharacter;
+	TObjectPtr<class AMSCharacterBase> OwningCharacter;
 
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Runtime", ReplicatedUsing=OnRep_EquippedWeaponInstance)
 	TObjectPtr<AWeaponBase> EquippedWeaponInstance;
@@ -59,6 +63,7 @@ protected:
 	// ===================================
 	// Events: Delegate Declarations
 	// ===================================
+
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Weapon Events")
 	FOnWeaponEquippedSignature OnWeaponEquipped;
@@ -79,7 +84,7 @@ public:
 	void EquipWeaponByFollowingTag(const FGameplayTag& WeaponTag);
 
 	UFUNCTION(BlueprintCallable, Category = "Weapon Actions")
-	void UnequipWeapon();
+	void UnequipWeapon(bool bIsEquippingNextWeapon);
 
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Weapon Actions")

@@ -31,7 +31,7 @@ class MONSTERSMASHER_API AMSPlayerState : public AModularPlayerState, public IAb
 	// =======================
 public:
 	AMSPlayerState();
-	
+
 protected:
 	// Removed BeginPlay, as PostInitializeComponents is more appropriate for GAS setup
 	// virtual void BeginPlay() override;
@@ -39,15 +39,15 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void PostInitializeComponents() override;
-	
-	
+
+
 	// =======================
 	// GAS Set up and overrides
 	// =======================
-	
-public:
 
+public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	virtual UMSAbilitySystemComponent* GetMSAbilitySystemComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "GAS")
 	UMSAttributeSet* GetAttributeSet() const;
@@ -66,13 +66,11 @@ protected:
 	// Helper to store the avatar actor, for InitAbilityActorInfo
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")
 	TObjectPtr<AActor> CachedAvatarActor;
-	
-	
+
+
 	// =======================
 	// Attribute Change Callbacks
 	// =======================
-	
-protected:
-	
+
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 };

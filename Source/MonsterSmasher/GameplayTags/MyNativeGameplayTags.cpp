@@ -104,6 +104,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Event_ComboWindow_Close, "Event.ComboWindow.Close");
 // Ability Events
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Ability_Activated, "Event.Ability.Activated");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Ability_Ended, "Event.Ability.Ended");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Abilities_Changed, "Event.Abilities.Changed");
 
 // Weapon Events
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Weapon_Equip, "Event.Weapon.Equip");

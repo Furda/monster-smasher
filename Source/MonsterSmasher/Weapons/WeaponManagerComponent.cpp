@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "WeaponManagerComponent.h"
+#include "Characters/Base/MSCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
 #include "Net/UnrealNetwork.h" // Required for replication macros
@@ -26,8 +27,8 @@ void UWeaponManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Get the character (The use character can change to the combat component)
-	OwningCharacter = Cast<ACharacter>(GetOwner());
+	// This might change when we implement the combat component or to some interface
+	OwningCharacter = Cast<AMSCharacterBase>(GetOwner());
 
 	// Cache Weapon lookup in the beginning so it is fast to access later
 	BuildWeaponTagLookup();
@@ -85,12 +86,12 @@ void UWeaponManagerComponent::EquipWeaponByTag(const FGameplayTag& WeaponTag)
 	// if trying to equip the same weapon, unequip it and end the action
 	if (EquippedWeaponInstance && EquippedWeaponInstance->IsA(WeaponClass))
 	{
-		UnequipWeapon();
+		UnequipWeapon(false);
 		return;
 	}
 
 	// If a weapon is already equipped, unequip it first
-	UnequipWeapon();
+	UnequipWeapon(true);
 
 	SpawnWeaponForCharacter(WeaponClass);
 	SetEquippedWeaponProperties();
@@ -107,7 +108,7 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 	{
 		return;
 	}
-	
+
 	if (!OwningCharacter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::EquipWeaponByFollowingTag: OwningCharacter is invalid!"));
@@ -116,6 +117,7 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 
 	TSubclassOf<AWeaponBase> WeaponClass;
 
+	// Get the weapon to equip
 	if (EquippedWeaponInstance)
 	{
 		// If the current equip weapon is the last index, equip the first weapon, else equip the next one
@@ -181,10 +183,19 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 	// If a weapon is already equipped, unequip it first
 	if (EquippedWeaponInstance)
 	{
-		UnequipWeapon();
+		UnequipWeapon(true);
 	}
-	
+
+	// Equip the new weapon
 	SpawnWeaponForCharacter(WeaponClass);
+
+	// Grant the abilities from the equipped weapon
+	if (!EquippedWeaponInstance->WeaponConfig.AbilitiesToGrant.IsEmpty())
+	{
+		AbilitiesGrantedByWeapon = OwningCharacter->GrantAbilities(
+			EquippedWeaponInstance->WeaponConfig.AbilitiesToGrant);
+	}
+
 	SetEquippedWeaponProperties();
 
 	// Broadcast the delegate
@@ -192,14 +203,31 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 }
 
 // Unequip weapon and broadcast the event
-void UWeaponManagerComponent::UnequipWeapon()
+void UWeaponManagerComponent::UnequipWeapon(bool bIsEquippingNextWeapon)
 {
-	if (EquippedWeaponInstance)
+	// Only call this in the server
+	if (GetOwnerRole() != ROLE_Authority)
 	{
-		// Destroy equipped weapon instance  
-		EquippedWeaponInstance->Destroy();
-		EquippedWeaponInstance = nullptr;
+		return;
+	}
 
+	if (!EquippedWeaponInstance)
+	{
+		UE_LOG(LogTemp, Log, TEXT("UWeaponManagerComponent::UnequipWeapon: No weapon is currently equipped."));
+		return;
+	}
+
+	// Destroy equipped weapon instance
+	EquippedWeaponInstance->Destroy();
+	EquippedWeaponInstance = nullptr;
+
+	// Remove abilities of the weapon
+	OwningCharacter->RemoveAbilities(AbilitiesGrantedByWeapon);
+	AbilitiesGrantedByWeapon.Empty();
+
+	// Only set Unarmed properties and broadcast event if not equipping another weapon
+	if (!bIsEquippingNextWeapon)
+	{
 		// Change back to Unarmed
 		SetEquippedWeaponProperties();
 
@@ -257,6 +285,7 @@ void UWeaponManagerComponent::SpawnWeaponForCharacter(TSubclassOf<AWeaponBase> W
 	);
 }
 
+// This funtion is called in the client to set the weapon properties like AnimClass and movement properties
 void UWeaponManagerComponent::SetEquippedWeaponProperties()
 {
 	if (!OwningCharacter)

@@ -26,17 +26,19 @@ void UMSAbilitySystemComponent::AbilityLocalInputReleased(int32 InputID)
 }
 
 // Grants abilities by iterating over the InputConfig's AbilityInputActions
-void UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig(const UMSInputConfig* InputConfig, AActor* InOwnerActor)
+TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig(
+	const UMSInputConfig* InputConfig, AActor* InOwnerActor)
 {
 	if (!InputConfig)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig: InputConfig is null!"));
-		return;
+		return TArray<FGameplayAbilitySpecHandle>();
 	}
 
 	// All abilities in the input config are granted
 	for (const FMSInputAction& Action : InputConfig->AbilityInputActions)
 	{
+		// if no ability class, skip it
 		if (!Action.AbilityClass)
 		{
 			continue;
@@ -45,17 +47,17 @@ void UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig(const UMSInputConfi
 		// Get current ability parameters
 		int32 AbilityInputID = Action.InputID == EAbilityInputID::None ? -1 : static_cast<int32>(Action.InputID);
 		FGameplayTag AbilityTag = Action.InputTag.IsValid() ? Action.InputTag : FGameplayTag::EmptyTag;
+		FGameplayAbilitySpec NewAbilitySpec(Action.AbilityClass, 1, AbilityInputID, InOwnerActor);
 
-		FGameplayAbilitySpec NewAbilitySpec(Action.AbilityClass, 1, AbilityInputID,
-		                                    InOwnerActor);
 		// Associate tag to ability
 		NewAbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityTag);
 
 		// Save the ability spec handle to in case it is needed later
 		FGameplayAbilitySpecHandle AbilityHandle = GiveAbility(NewAbilitySpec);
+
+		// Store granted ability handle
+		GrantedAbilitiesHandles.Add(AbilityHandle);
 	}
-	UE_LOG(LogTemp, Log,
-	       TEXT(
-		       "UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig: %d abilities granted from InputConfig."
-	       ), GetActivatableAbilities().Num());
+
+	return GrantedAbilitiesHandles;
 }

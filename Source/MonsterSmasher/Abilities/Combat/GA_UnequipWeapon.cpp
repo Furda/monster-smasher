@@ -47,7 +47,7 @@ void UGA_UnequipWeapon::ActivateAbility(
 		return;
 	}
 	// Unequip weapon by the following weapon tag
-	WeaponManager->UnequipWeapon();
+	WeaponManager->UnequipWeapon(false);
 
 	// End ability
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

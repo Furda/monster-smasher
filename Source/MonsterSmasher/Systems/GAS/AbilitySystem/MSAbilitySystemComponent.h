@@ -15,10 +15,13 @@ class MONSTERSMASHER_API UMSAbilitySystemComponent : public UAbilitySystemCompon
 public:
 	// Sets default values for this component's properties
 	UMSAbilitySystemComponent();
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Ability")
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilitiesHandles;
 
 	virtual void AbilityLocalInputPressed(int32 InputID) override;
 	virtual void AbilityLocalInputReleased(int32 InputID) override;
 
 	// Function to give abilities based on a data asset
-	void GiveAbilitiesFromInputConfig(const class UMSInputConfig* InputConfig, AActor* InOwnerActor);
+	TArray<FGameplayAbilitySpecHandle> GiveAbilitiesFromInputConfig(const class UMSInputConfig* InputConfig, AActor* InOwnerActor);
 };
