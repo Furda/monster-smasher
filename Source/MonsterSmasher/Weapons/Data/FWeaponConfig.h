@@ -7,7 +7,7 @@
 
 #include "FWeaponConfig.generated.h"
 
-class GameplayAbility;
+class UGameplayAbility;
 
 // Delegate for any specific events the weapon needs (optional)
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponDataChange);
