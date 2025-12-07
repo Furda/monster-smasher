@@ -154,4 +154,5 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Effect_InitAttributes);
 
 // ----- Cooldowns -----
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cooldown);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Cooldown_Healing);

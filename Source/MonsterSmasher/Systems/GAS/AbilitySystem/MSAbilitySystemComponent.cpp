@@ -1,17 +1,31 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "MSAbilitySystemComponent.h"
+
 #include "AbilitySystemGlobals.h"
-#include "Abilities/GameplayAbility.h"
+#include "Characters/Base/MSCharacterBase.h"
 #include "Systems/GAS/Abilities/MSGameplayAbility.h"
 #include "Input/MSInputConfig.h" // For UMSInputConfig
+
+class UMSGameplayAbility;
+
+
+// ==============================
+// Basic set up and overrides
+// ==============================
 
 UMSAbilitySystemComponent::UMSAbilitySystemComponent()
 {
 	// PrimaryComponentTick.bCanEverTick = true;
 	// PrimaryComponentTick.bStartWithTickEnabled = true;
 }
+
+
+// ==============================
+// Input abilities events
+// ==============================
 
 void UMSAbilitySystemComponent::AbilityLocalInputPressed(int32 InputID)
 {
@@ -24,6 +38,11 @@ void UMSAbilitySystemComponent::AbilityLocalInputReleased(int32 InputID)
 	// Default implementation (call parent) to keep behavior
 	Super::AbilityLocalInputReleased(InputID);
 }
+
+
+// ==============================
+// Granting abilities
+// ==============================
 
 // Grants abilities by iterating over the InputConfig's AbilityInputActions
 TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig(
@@ -60,4 +79,17 @@ TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromI
 	}
 
 	return GrantedAbilitiesHandles;
+}
+
+void UMSAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+	Super::OnRep_ActivateAbilities();
+
+	// TODO: Double check logic for PlayerState own characters
+	AMSCharacterBase* OwnerCharacter = Cast<AMSCharacterBase>(GetOwner());
+	if (!OwnerCharacter)
+	{
+		return;
+	}
+	OwnerCharacter->SendAbilitiesChangedEvent();
 }

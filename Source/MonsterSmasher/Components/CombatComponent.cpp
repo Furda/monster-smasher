@@ -1,9 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "CombatComponent.h"
+
 #include "AbilitySystemInterface.h"
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
+#include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 
 
 // Sets default values for this component's properties

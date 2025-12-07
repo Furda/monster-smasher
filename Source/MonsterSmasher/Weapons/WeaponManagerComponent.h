@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "Components/ActorComponent.h"
-#include "GameFramework/Character.h" // The use of character can change to the combat component
 #include "GameplayTagContainer.h"
 #include "Data/FWeaponConfig.h"
 #include "WeaponManagerComponent.generated.h"

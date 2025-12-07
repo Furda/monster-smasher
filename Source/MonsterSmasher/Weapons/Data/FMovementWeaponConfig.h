@@ -1,12 +1,12 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/DataTable.h" // Required if you plan to use this struct in a data table
+#include "Engine/DataTable.h"
 #include "FMovementWeaponConfig.generated.h"
 
 
 /**
- * MovementProperties: Holds all the movement-related properties for weapons.
+ *  Holds all the movement-related properties for weapons.
  */
 USTRUCT(BlueprintType)
 struct FMovementWeaponConfig

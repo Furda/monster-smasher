@@ -33,11 +33,11 @@ public:
 protected:
 	/** Progress bar for visual health */
 	UPROPERTY(meta = (BindWidget))
-	UProgressBar* HealthBar;
+	TObjectPtr<UProgressBar> HealthBar;
 
 	/** Text value of health */
 	UPROPERTY(meta = (BindWidgetOptional))
-	UTextBlock* HealthText;
+	TObjectPtr<UTextBlock> HealthText;
 
 private:
 	UPROPERTY()

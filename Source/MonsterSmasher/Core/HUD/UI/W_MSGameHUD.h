@@ -9,6 +9,8 @@
 class UMSAttributeSet;
 class UMSAbilitySystemComponent;
 class UW_Vitals;
+class UW_AbilitiesBar;
+
 /**
  * Main HUD of the game
  */
@@ -27,8 +29,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UW_Vitals* GetVitalsWidget() const;
 
+	UFUNCTION(BlueprintCallable)
+	UW_AbilitiesBar* GetAbilitiesBarWidget() const;
+
 protected:
-	/** Health Bar reference (must match widget name in Blueprint) */
+	/** Health and stamina Bar reference (must match widget name in Blueprint) */
 	UPROPERTY(meta = (BindWidget))
-	UW_Vitals* Vitals;
+	TObjectPtr<UW_Vitals> Vitals;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UW_AbilitiesBar> AbilitiesBar;
 };

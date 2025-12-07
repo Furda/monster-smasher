@@ -3,7 +3,7 @@
 
 #include "AN_HitBoxStart.h"
 #include "GameFramework/Actor.h"
-#include "Engine/Engine.h"
+
 
 void UAN_HitBoxStart::Notify(USkeletalMeshComponent* MeshComp,
                              UAnimSequenceBase* Animation,

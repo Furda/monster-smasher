@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "ModularPlayerState.h"
 #include "AbilitySystemInterface.h"
-#include "GameplayEffectTypes.h"
 #include "MSPlayerState.generated.h"
 
 class UMSAbilitySystemComponent;
 class UMSAttributeSet;
+struct FOnAttributeChangeData; 
 
 /**
  * @brief A subclass of AModularPlayerState that incorporates Gameplay Ability System (GAS) and attributes.

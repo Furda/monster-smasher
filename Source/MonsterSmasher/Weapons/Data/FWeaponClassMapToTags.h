@@ -2,9 +2,11 @@
 
 
 #include "CoreMinimal.h"
-#include "Engine/DataTable.h" // Required if you plan to use this struct in a data table
+#include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "FWeaponClassMapToTags.generated.h"
+
+class AWeaponBase;
 
 /**
  * This struct maps Gameplay Tags to Weapon Classes.
@@ -15,7 +17,7 @@ struct FWeaponClassMapToTags : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	TSubclassOf<class AWeaponBase> WeaponClass;
+	TSubclassOf<AWeaponBase> WeaponClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (Categories = "Weapon"))
 	FGameplayTag GameplayTag;

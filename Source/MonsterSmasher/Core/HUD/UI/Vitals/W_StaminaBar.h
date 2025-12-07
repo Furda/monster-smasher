@@ -33,11 +33,11 @@ public:
 protected:
 	/** Progress bar for visual Stamina */
 	UPROPERTY(meta = (BindWidget))
-	UProgressBar* StaminaBar;
+	TObjectPtr<UProgressBar> StaminaBar;
 
 	/** Text value of Stamina */
 	UPROPERTY(meta = (BindWidgetOptional))
-	UTextBlock* StaminaText;
+	TObjectPtr<UTextBlock> StaminaText;
 
 private:
 	UPROPERTY()

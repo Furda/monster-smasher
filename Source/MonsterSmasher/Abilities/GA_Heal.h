@@ -20,8 +20,6 @@ public:
 	UGA_Heal();
 
 protected:
-	// virtual UGameplayEffect* GetCooldownGameplayEffect() const override;
-
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                             const FGameplayAbilityActivationInfo ActivationInfo,
 	                             const FGameplayEventData* TriggerEventData) override;
