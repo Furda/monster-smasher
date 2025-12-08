@@ -32,10 +32,10 @@ void UGA_Heal::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 	// Apply healing effect to the target character
 	AMSCharacterBase* TargetCharacter = Cast<AMSCharacterBase>(ActorInfo->AvatarActor.Get());
 	ApplyHealingEffect(TargetCharacter);
-
+	
 	if (!CommitAbilityCooldown(Handle, ActorInfo, ActivationInfo, true))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UGA_Heal: CommitAbilityCost failed!"));
+		UE_LOG(LogTemp, Warning, TEXT("UGA_Heal: CommitAbilityCooldown failed!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -69,7 +69,6 @@ void UGA_Heal::ApplyHealingEffect(const AMSCharacterBase* TargetCharacter)
 			CostSpecHandle.Data->SetSetByCallerMagnitude(HealMagnitudeTag, HealingAmount);
 
 			MSASC->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
-			UE_LOG(LogTemp, Log, TEXT("Healing effect applied to %s"), *TargetCharacter->GetName());
 		}
 	}
 	else

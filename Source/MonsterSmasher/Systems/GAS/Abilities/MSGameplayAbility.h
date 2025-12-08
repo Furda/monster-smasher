@@ -29,12 +29,6 @@ enum class EMSAbilityActivationPolicy : uint8
 };
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
-	FOnCommittedCooldownSignature,
-	const FGameplayTagContainer&, CooldownTags,
-	float, CooldownDuration
-);
-
 /**
  * Base class for all Gameplay Abilities in Monster Smasher.
  * Provides custom activation policies and other common functionality.
@@ -96,24 +90,4 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI | Abilities Bar")
 	TObjectPtr<UTexture2D> AbilityIcon;
-
-
-	// ======================
-	// Cooldown Events and overrides
-	// ======================
-
-	virtual bool CommitAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-							   const FGameplayAbilityActivationInfo ActivationInfo,
-							   FGameplayTagContainer* OptionalRelevantTags = nullptr) override;
-	virtual bool CommitAbilityCooldown(const FGameplayAbilitySpecHandle Handle,
-									   const FGameplayAbilityActorInfo* ActorInfo,
-									   const FGameplayAbilityActivationInfo ActivationInfo, const bool ForceCooldown,
-									   FGameplayTagContainer* OptionalRelevantTags = nullptr) override;
-
-
-	// Event delegate accessible in Blueprint
-	UPROPERTY(BlueprintAssignable, Category="Cooldown")
-	FOnCommittedCooldownSignature OnCommittedCooldown;
-
-	void BroadcastCooldownCommit() const;
 };

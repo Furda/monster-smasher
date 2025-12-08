@@ -45,9 +45,9 @@ void UGA_Block::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	// Commit the ability to ensure it can be used
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UGA_Block: CommitAbility failed!"));
+		UE_LOG(LogTemp, Error, TEXT("UGA_Block: CommitAbilityCost failed!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -90,6 +90,14 @@ void UGA_Block::OnBlockInputReleased(float TimeWaited)
 {
 	// This log confirms the task is now firing correctly.
 	UE_LOG(LogTemp, Log, TEXT("UGA_Block: Input released and ending ability. Time held: %.2f"), TimeWaited);
+	
+	if (!CommitAbilityCooldown(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_Block: CommitAbilityCooldown failed!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
+	
 	// End the ability when input is released
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

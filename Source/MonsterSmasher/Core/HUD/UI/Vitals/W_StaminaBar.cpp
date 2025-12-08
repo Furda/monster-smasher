@@ -15,6 +15,18 @@ void UW_StaminaBar::NativeConstruct()
 	// Initial setup if needed
 }
 
+void UW_StaminaBar::NativeDestruct()
+{
+	// Good: This correctly removes a delegate handle
+	if (CachedASC && CachedAttributes)
+	{
+		// Remove bound delegate handle
+		CachedASC->GetGameplayAttributeValueChangeDelegate(CachedAttributes->GetStaminaAttribute())
+			 .RemoveAll(this);
+	}
+	Super::NativeDestruct();
+}
+
 void UW_StaminaBar::InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes)
 {
 	if (!InASC || !InAttributes)

@@ -1,9 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-
-
 #include "W_HealthBar.h"
 
+#include "GameplayEffectTypes.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
@@ -13,6 +12,18 @@ void UW_HealthBar::NativeConstruct()
 {
 	Super::NativeConstruct();
 	// Initial setup if needed
+}
+
+void UW_HealthBar::NativeDestruct()
+{
+	// Good: This correctly removes a delegate handle
+	if (CachedASC && CachedAttributes)
+	{
+		// Remove bound delegate handle
+		CachedASC->GetGameplayAttributeValueChangeDelegate(CachedAttributes->GetHealthAttribute())
+		     .RemoveAll(this);
+	}
+	Super::NativeDestruct();
 }
 
 void UW_HealthBar::InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes)
@@ -53,7 +64,7 @@ void UW_HealthBar::OnHealthChanged(const FOnAttributeChangeData& Data)
 	UpdateHealthBar(Data.NewValue, CachedAttributes->GetMaxHealth());
 }
 
-void UW_HealthBar::UpdateHealthBar(float CurrentHealth, float MaxHealth)
+void UW_HealthBar::UpdateHealthBar(float CurrentHealth, float MaxHealth) const
 {
 	const float Percent = MaxHealth > 0.f ? CurrentHealth / MaxHealth : 0.f;
 

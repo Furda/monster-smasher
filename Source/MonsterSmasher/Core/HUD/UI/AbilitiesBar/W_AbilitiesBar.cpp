@@ -101,9 +101,7 @@ void UW_AbilitiesBar::RefreshAbilitySlots()
 		
 		if (!AbilitySlotWidget) continue;
 		
-		UE_LOG(LogTemp, Warning, TEXT("AbilitySlotWidget: %s"), *AbilitySlotWidget->GetName());
-		
-		AbilitySlotWidget->InitializeWithGAS(CachedASC, Ability);
+		AbilitySlotWidget->InitializeWithGAS(CachedASC, AbilitySpecHandle);
 		AbilitySlotsContainer->AddChild(AbilitySlotWidget);
 	}
 }

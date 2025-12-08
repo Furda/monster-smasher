@@ -19,6 +19,7 @@ class MONSTERSMASHER_API UW_StaminaBar : public UUserWidget
 
 public:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 	/** Initialize Stamina bar with ASC and attributes */
 	UFUNCTION(BlueprintCallable)

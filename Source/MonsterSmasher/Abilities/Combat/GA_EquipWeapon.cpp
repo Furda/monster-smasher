@@ -87,6 +87,13 @@ void UGA_EquipWeapon::ActivateAbility(
 
 	// Equip weapon by the following weapon tag
 	WeaponManager->EquipWeaponByFollowingTag(FollowingWeaponTag);
+	
+	if (!CommitAbilityCooldown(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_EquipWeapon: CommitAbilityCooldown failed!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
 
 	// End ability
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

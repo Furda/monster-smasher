@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayAbilitySpec.h"
 #include "Blueprint/UserWidget.h"
 #include "GameplayTagContainer.h"
 #include "W_AbilitySlot.generated.h"
@@ -34,7 +35,7 @@ public:
 	// Initialize widget with ASC
 	// This function is supposed to be called from the Abilities Bar widget
 	UFUNCTION(BlueprintCallable)
-	void InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSGameplayAbility* InAbility);
+	void InitializeWithGAS(UMSAbilitySystemComponent* InASC, FGameplayAbilitySpecHandle InAbility);
 
 
 	// =======================
@@ -47,8 +48,8 @@ protected:
 	TObjectPtr<UImage> AbilityIcon;
 
 	// Text value for the name of the ability. This will show if the Ability icon is not set
-	UPROPERTY(meta = (BindWidgetOptional))
-	TObjectPtr<UTextBlock> AbilityText;
+	// UPROPERTY(meta = (BindWidgetOptional))
+	// TObjectPtr<UTextBlock> AbilityText;
 
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> CooldownText;
@@ -63,21 +64,23 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void OnCooldownStarted(const FGameplayTagContainer& CooldownTags,
-	                       float CooldownDuration);
-	UFUNCTION(BlueprintCallable)
-	void OnCooldownEnded();
+	void OnCooldownStarted();
 	UFUNCTION(BlueprintCallable)
 	void UpdateCooldown();
-
 	UFUNCTION(BlueprintCallable)
-	float GetCooldownTimeRemaining();
+	void OnCooldownEnded();
+	
+protected:
+	// Called when any gameplay effect is added to the owner ASC
+	UFUNCTION(BlueprintCallable)
+	void OnGameplayEffectAdded(UAbilitySystemComponent* Target, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle ActiveHandle);
+	
 
 	UPROPERTY()
 	FTimerHandle CooldownTimerHandle;
 
 	UPROPERTY(EditDefaultsOnly, Category="Cooldown")
-	float CooldownUpdateRate = 0.1f;
+	float CooldownUpdateRate = 1.0f;
 
 
 	// =======================
@@ -88,5 +91,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<UMSAbilitySystemComponent> CachedASC;
 	UPROPERTY()
-	TObjectPtr<UMSGameplayAbility> CachedGameplayAbility;
+	FGameplayAbilitySpecHandle CachedAbilitySpecHandle;
+	UPROPERTY()
+	TObjectPtr<UMSGameplayAbility> CachedAbility;
+	UPROPERTY()
+	FGameplayTag CooldownTagToWatch;
+	
 };

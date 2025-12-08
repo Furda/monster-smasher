@@ -6,11 +6,11 @@
 
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "Systems/GAS/Abilities/MSGameplayAbility.h"
-#include "Abilities/GameplayAbilityTypes.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/Overlay.h"
 #include "GameplayTagContainer.h"
+
 
 
 void UW_AbilitySlot::NativeConstruct()
@@ -27,66 +27,86 @@ void UW_AbilitySlot::NativeConstruct()
 
 void UW_AbilitySlot::NativeDestruct()
 {
-	if (CachedGameplayAbility)
+	if (CachedASC)
 	{
-		CachedGameplayAbility->OnCommittedCooldown.RemoveDynamic(this, &UW_AbilitySlot::OnCooldownStarted);
+		CachedASC->OnActiveGameplayEffectAddedDelegateToSelf.RemoveAll(this);
 	}
 
 	Super::NativeDestruct();
 }
 
-void UW_AbilitySlot::InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSGameplayAbility* InGameplayAbility)
+void UW_AbilitySlot::InitializeWithGAS(UMSAbilitySystemComponent* InASC, FGameplayAbilitySpecHandle InAbilitySpecHandle)
 {
-	if (!InASC || !InGameplayAbility)
+	if (!InASC || !InAbilitySpecHandle.IsValid())
 	{
 		return;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("UW_AbilitySlot::InitializeWithGAS: for ability: %s"), *InGameplayAbility->GetName());
 
 	// cache references
 	CachedASC = InASC;
-	CachedGameplayAbility = InGameplayAbility;
-
+	CachedAbility = Cast<UMSGameplayAbility>(CachedASC->FindAbilitySpecFromHandle(InAbilitySpecHandle)->Ability);
+	
 	// Set Ability slot properties
-	AbilityText->SetText(FText::FromName(CachedGameplayAbility->GetFName()));
-
-	if (CachedGameplayAbility->AbilityIcon)
+	if (CachedAbility->AbilityIcon)
 	{
-		AbilityIcon->SetBrushFromTexture(CachedGameplayAbility->AbilityIcon);
-		AbilityText->SetVisibility(ESlateVisibility::Hidden);
+		AbilityIcon->SetBrushFromTexture(CachedAbility->AbilityIcon);
 	}
-
-
-	// Bind abilities cooldown events
-	CachedGameplayAbility->OnCommittedCooldown.AddDynamic(this, &UW_AbilitySlot::OnCooldownStarted);
+	
+	// Get The tag to watch from the ability's cooldown GameplayEffect
+	if (!CachedAbility->GetCooldownGameplayEffect())
+	{
+		UE_LOG(LogTemp, Log, TEXT("UW_AbilitySlot::InitializeWithGAS: No cooldown GameplayEffect found for the ability: %s."), *InAbilitySpecHandle.ToString());
+		return;
+	}
+	
+	FGameplayTagContainer CooldownGETags = CachedAbility->GetCooldownGameplayEffect()->GetAssetTags();
+	if (!CooldownGETags.IsValid() || CooldownGETags.Num() <= 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UW_AbilitySlot::InitializeWithGAS: No cooldown tags found for the ability: %s."), *InAbilitySpecHandle.ToString());
+		return;
+	}
+	CooldownTagToWatch = CooldownGETags.First();
+	
+	// Bind delegate to listen for new GameplayEffects applied to the owner
+	CachedASC->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &UW_AbilitySlot::OnGameplayEffectAdded);
 }
 
-void UW_AbilitySlot::OnCooldownStarted(const FGameplayTagContainer& CooldownTags, float CooldownDuration)
+void UW_AbilitySlot::OnGameplayEffectAdded(UAbilitySystemComponent* Target, const FGameplayEffectSpec& Spec, FActiveGameplayEffectHandle ActiveHandle)
 {
-	UE_LOG(LogTemp, Warning,
-	       TEXT("UW_AbilitySlot::OnCooldownStarted: UI Cooldown started! Duration: %.2f seconds for Cooldown tag: %s"),
-	       CooldownDuration, *CooldownTags.ToString());
+	// Ensure this effect is applied to our ASC
+	if (Target != CachedASC)
+	{
+		return;
+	}
+	 
+	// Check if it is the correct gameplay effect by tag
+	FGameplayTagContainer CooldownGETags;
+	Spec.GetAllAssetTags(CooldownGETags);
+	if (!CooldownGETags.IsValid() || CooldownGETags.Num() <= 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("UW_AbilitySlot::OnGameplayEffectAdded: No cooldown tags found for the ability: %s."), *CachedAbilitySpecHandle.ToString());
+		return; 
+	}
+	
+	
+	if (CooldownGETags.HasTagExact(CooldownTagToWatch))
+	{
+		// Handle cooldown started
+		OnCooldownStarted();
+	}
+}
 
-	CooldownOverlay->SetVisibility(ESlateVisibility::Visible);
-
-
-	if (!CachedGameplayAbility)
+void UW_AbilitySlot::OnCooldownStarted()
+{
+	if (!CachedAbility)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("No Cached ability."));
 		return;
 	}
-
-	FGameplayAbilityActorInfo ActorInfoCopy = CachedGameplayAbility->GetActorInfo();
-
-	UMSAbilitySystemComponent* ASC = ActorInfoCopy.AbilitySystemComponent.IsValid()
-		                                 ? Cast<UMSAbilitySystemComponent>(ActorInfoCopy.AbilitySystemComponent.Get())
-		                                 : nullptr;
-	if (!ASC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No AbilitySystemComponent."));
-		return;
-	}
+	
+	// Show Cooldown UI
+	CooldownOverlay->SetVisibility(ESlateVisibility::Visible);
+	// SetIsEnabled(false);
 
 	// Update cooldown without delay
 	UpdateCooldown();
@@ -104,48 +124,26 @@ void UW_AbilitySlot::OnCooldownStarted(const FGameplayTagContainer& CooldownTags
 
 void UW_AbilitySlot::UpdateCooldown()
 {
-	float TimeRemaining = GetCooldownTimeRemaining();
-
-	UE_LOG(LogTemp, Warning, TEXT("Timer Fired! Time remaining: %f"), TimeRemaining);
-
+	float TimeRemaining = 0.f, Duration = 0.f;
+	CachedAbility->GetCooldownTimeRemainingAndDuration(CachedAbilitySpecHandle, CachedASC->AbilityActorInfo.Get(), TimeRemaining,Duration);
+	
 	if (TimeRemaining <= 0.f)
 	{
 		OnCooldownEnded();
 		return;
 	}
-
-	SetIsEnabled(false);
+	
 	if (CooldownOverlay && CooldownText)
 	{
-		FText CooldownTimeText = FText::FromString(FString::Printf(TEXT("%.1fs"), TimeRemaining));
+		// FText CooldownTimeText = FText::FromString(FString::Printf(TEXT("%.1fs"), TimeRemaining));
+		FText CooldownTimeText = FText::AsNumber(FMath::RoundToInt(TimeRemaining));
 		CooldownText->SetText(CooldownTimeText);
-		CooldownOverlay->SetVisibility(TimeRemaining > 0.f ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 	}
-}
-
-float UW_AbilitySlot::GetCooldownTimeRemaining()
-{
-	if (!CachedASC || !CachedGameplayAbility)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("No ASC or ability."));
-		return 0.f;
-	}
-
-	FGameplayAbilitySpec* Spec = CachedASC->FindAbilitySpecFromClass(CachedGameplayAbility->GetClass());
-	if (!Spec || !Spec->Ability)
-	{
-		return 0.f;
-	}
-
-	float TimeRemaining = 0.f, Duration = 0.f;
-	Spec->Ability->GetCooldownTimeRemainingAndDuration(Spec->Handle, CachedASC->AbilityActorInfo.Get(), TimeRemaining,
-	                                                   Duration);
-	return TimeRemaining;
 }
 
 void UW_AbilitySlot::OnCooldownEnded()
 {
-	SetIsEnabled(true);
+	// SetIsEnabled(true);
 
 	// This should hide the cooldown overlay bar and its children
 	CooldownOverlay->SetVisibility(ESlateVisibility::Hidden);

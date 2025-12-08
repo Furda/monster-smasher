@@ -24,9 +24,9 @@ void UGA_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	// Commit the ability to ensure it can be used
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UGA_Sprint: CommitAbility failed!"));
+		UE_LOG(LogTemp, Warning, TEXT("UGA_Sprint: CommitAbilityCost failed!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -61,6 +61,8 @@ void UGA_Sprint::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const 
 		UE_LOG(LogTemp, Error, TEXT("UGA_Sprint: Failed to cast AvatarActor to Character."));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true); // End if unable to sprint
 	}
+	
+	
 }
 
 void UGA_Sprint::OnSprintInputReleased(float TimeWaited)
@@ -78,9 +80,9 @@ void UGA_Sprint::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGame
 	{
 		return;
 	}
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
-
-	// Ensure speed is reset when ability ends naturally
+	
 	// Ensure speed is reset when ability ends (either naturally or cancelled)
 	if (CharacterMovement && CharacterMovement->MaxWalkSpeed != OriginalWalkSpeed)
 	// Only reset if it's not already original

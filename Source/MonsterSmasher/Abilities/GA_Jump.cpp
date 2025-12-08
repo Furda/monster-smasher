@@ -20,6 +20,13 @@ void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_Jump: CommitAbilityCost failed!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
+	
 	// Call the native jump function on the character
 	if (ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get()))
 	{
@@ -27,7 +34,14 @@ void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UGA_Jump::ActivateAbility: AvatarActor is not a character!"));
+		UE_LOG(LogTemp, Error, TEXT("UGA_Jump::ActivateAbility: AvatarActor is not a character!"));
+	}
+	
+	if (!CommitAbilityCooldown(Handle, ActorInfo, ActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_Jump: CommitAbilityCost failed!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
 	}
 
 	// End the ability immediately after jumping

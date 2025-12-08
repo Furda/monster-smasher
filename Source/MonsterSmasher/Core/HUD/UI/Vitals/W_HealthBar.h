@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "GameplayEffectTypes.h"
 #include "W_HealthBar.generated.h"
 
 class UMSAbilitySystemComponent;
 class UMSAttributeSet;
 class UProgressBar;
 class UTextBlock;
+struct FOnAttributeChangeData;
 
 UCLASS()
 class MONSTERSMASHER_API UW_HealthBar : public UUserWidget
@@ -19,6 +19,7 @@ class MONSTERSMASHER_API UW_HealthBar : public UUserWidget
 
 public:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 	/** Initialize Health bar with ASC and attributes */
 	UFUNCTION(BlueprintCallable)
@@ -28,7 +29,7 @@ public:
 	void OnHealthChanged(const FOnAttributeChangeData& Data);
 
 	/** Updates the UI manually */
-	void UpdateHealthBar(float CurrentHealth, float MaxHealth);
+	void UpdateHealthBar(float CurrentHealth, float MaxHealth) const;
 
 protected:
 	/** Progress bar for visual health */

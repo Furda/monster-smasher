@@ -126,9 +126,9 @@ void UGA_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	// Commit the ability to ensure it can be used
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UGA_Dodge: CommitAbility failed!"));
+		UE_LOG(LogTemp, Error, TEXT("UGA_Dodge: CommitAbilityCost failed!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -152,14 +152,26 @@ void UGA_Dodge::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 
 void UGA_Dodge::OnDodgeMontageCompleted()
 {
+	if (!CommitAbilityCooldown(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_Dodge: CommitAbilityCost failed!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
+	
 	// End the ability when the montage completes
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
-	// UE_LOG(LogTemp, Log, TEXT("UGA_Dodge: Dodge montage finished."));
 }
 
 void UGA_Dodge::OnDodgeFinished()
 {
-	// UE_LOG(LogTemp, Log, TEXT("UGA_Dodge: Dodge duration finished."));
+	if (!CommitAbilityCooldown(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_Dodge: CommitAbilityCost failed!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
+	
 	// End the ability when the delay completes
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
