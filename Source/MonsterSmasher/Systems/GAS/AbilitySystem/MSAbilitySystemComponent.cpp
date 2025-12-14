@@ -54,6 +54,8 @@ TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromI
 		return TArray<FGameplayAbilitySpecHandle>();
 	}
 
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+	
 	// All abilities in the input config are granted
 	for (const FMSInputAction& Action : InputConfig->AbilityInputActions)
 	{
@@ -65,20 +67,17 @@ TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromI
 
 		// Get current ability parameters
 		int32 AbilityInputID = Action.InputID == EAbilityInputID::None ? -1 : static_cast<int32>(Action.InputID);
-		FGameplayTag AbilityTag = Action.InputTag.IsValid() ? Action.InputTag : FGameplayTag::EmptyTag;
 		FGameplayAbilitySpec NewAbilitySpec(Action.AbilityClass, 1, AbilityInputID, InOwnerActor);
 
 		// Associate tag to ability
-		NewAbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityTag);
-
+		if (Action.InputTag.IsValid()) NewAbilitySpec.GetDynamicSpecSourceTags().AddTag(Action.InputTag);
+		
 		// Save the ability spec handle to in case it is needed later
 		FGameplayAbilitySpecHandle AbilityHandle = GiveAbility(NewAbilitySpec);
-
-		// Store granted ability handle
-		GrantedAbilitiesHandles.Add(AbilityHandle);
+		
+		GrantedAbilityHandles.Add(AbilityHandle);
 	}
-
-	return GrantedAbilitiesHandles;
+	return GrantedAbilityHandles;
 }
 
 void UMSAbilitySystemComponent::OnRep_ActivateAbilities()
@@ -87,9 +86,27 @@ void UMSAbilitySystemComponent::OnRep_ActivateAbilities()
 
 	// TODO: Double check logic for PlayerState own characters
 	AMSCharacterBase* OwnerCharacter = Cast<AMSCharacterBase>(GetOwner());
-	if (!OwnerCharacter)
+	if (!OwnerCharacter) return;
+	
+	bool bHasAbilitiesChanged = false;
+	if (LastActivatableAbilities.Num() != ActivatableAbilities.Items.Num())
 	{
-		return;
+		OwnerCharacter->SendAbilitiesChangedEvent();
+		bHasAbilitiesChanged = true;
 	}
-	OwnerCharacter->SendAbilitiesChangedEvent();
+	else
+	{
+		for (int i = 0; i < LastActivatableAbilities.Num(); i++)
+		{
+			if (LastActivatableAbilities[i].Ability != ActivatableAbilities.Items[i].Ability)
+			{
+				OwnerCharacter->SendAbilitiesChangedEvent();
+				bHasAbilitiesChanged = true;
+				break; // break the loop since already detected a change
+			}
+		}
+	}
+
+	if (bHasAbilitiesChanged) LastActivatableAbilities = ActivatableAbilities.Items;
+
 }

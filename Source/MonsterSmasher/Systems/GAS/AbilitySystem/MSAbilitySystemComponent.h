@@ -31,14 +31,14 @@ public:
 	// ==============================
 	// Granting abilities
 	// ==============================
-
-	UPROPERTY(BlueprintReadOnly, Category = "Ability")
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilitiesHandles;
-
+	
 	// Function to give abilities based on a data asset
 	TArray<FGameplayAbilitySpecHandle> GiveAbilitiesFromInputConfig(const class UMSInputConfig* InputConfig,
 	                                                                AActor* InOwnerActor);
-
 protected:
+	
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Abilities")
+	TArray<FGameplayAbilitySpec> LastActivatableAbilities;
+	
 	virtual void OnRep_ActivateAbilities() override;
 };
