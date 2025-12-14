@@ -19,6 +19,7 @@ class MONSTERSMASHER_API UW_StaminaBar : public UUserWidget
 
 public:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 
 	/** Initialize Stamina bar with ASC and attributes */
 	UFUNCTION(BlueprintCallable)
@@ -33,11 +34,11 @@ public:
 protected:
 	/** Progress bar for visual Stamina */
 	UPROPERTY(meta = (BindWidget))
-	UProgressBar* StaminaBar;
+	TObjectPtr<UProgressBar> StaminaBar;
 
 	/** Text value of Stamina */
 	UPROPERTY(meta = (BindWidgetOptional))
-	UTextBlock* StaminaText;
+	TObjectPtr<UTextBlock> StaminaText;
 
 private:
 	UPROPERTY()

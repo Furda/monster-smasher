@@ -1,6 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
+
+
+
 #include "GA_UnequipWeapon.h"
+
 #include "GameplayTagContainer.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
 #include "Weapons/WeaponManagerComponent.h"
@@ -24,8 +28,8 @@ void UGA_UnequipWeapon::ActivateAbility(
 	// Always call the Super implementation first
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// Commit cost/cooldown
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	// Commit cost
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
 	}
@@ -48,6 +52,13 @@ void UGA_UnequipWeapon::ActivateAbility(
 	}
 	// Unequip weapon by the following weapon tag
 	WeaponManager->UnequipWeapon(false);
+	
+	if (!CommitAbilityCooldown(Handle, ActorInfo, ActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_UnequipWeapon: CommitAbilityCost failed!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
 
 	// End ability
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);

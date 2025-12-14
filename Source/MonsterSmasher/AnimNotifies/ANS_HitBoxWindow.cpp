@@ -4,6 +4,7 @@
 #include "ANS_HitBoxWindow.h"
 #include "GameFramework/Actor.h"
 
+
 void UANS_HitBoxWindow::NotifyBegin(USkeletalMeshComponent* MeshComp,
                                     UAnimSequenceBase* Animation,
                                     float TotalDuration,

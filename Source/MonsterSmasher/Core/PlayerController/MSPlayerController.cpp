@@ -67,6 +67,20 @@ void AMSPlayerController::OnRep_PlayerState()
 	TryInitializeHUDWithGAS();
 }
 
+void AMSPlayerController::BeginDestroy()
+{
+	// ... other cleanup
+
+	if (GameHUD) // Assuming GameHUDWidget is your UW_MSGameHUD instance
+	{
+		// CRITICAL STEP: Remove the widget from the viewport before the PC is destroyed.
+		GameHUD->RemoveFromParent();
+		GameHUD = nullptr; // Clear the UObject pointer (optional, but good practice)
+	}
+    
+	Super::BeginDestroy();
+}
+
 
 // =======================
 // HUD

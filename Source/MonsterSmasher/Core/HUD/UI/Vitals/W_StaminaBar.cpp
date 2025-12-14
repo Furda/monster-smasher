@@ -1,10 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "W_StaminaBar.h"
+
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
-#include "Characters/Player/MSPlayerCharacter.h"
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
 
@@ -12,6 +13,18 @@ void UW_StaminaBar::NativeConstruct()
 {
 	Super::NativeConstruct();
 	// Initial setup if needed
+}
+
+void UW_StaminaBar::NativeDestruct()
+{
+	// Good: This correctly removes a delegate handle
+	if (CachedASC && CachedAttributes)
+	{
+		// Remove bound delegate handle
+		CachedASC->GetGameplayAttributeValueChangeDelegate(CachedAttributes->GetStaminaAttribute())
+			 .RemoveAll(this);
+	}
+	Super::NativeDestruct();
 }
 
 void UW_StaminaBar::InitializeWithGAS(UMSAbilitySystemComponent* InASC, UMSAttributeSet* InAttributes)

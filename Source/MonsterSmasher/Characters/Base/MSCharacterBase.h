@@ -5,11 +5,9 @@
 #include "CoreMinimal.h"
 #include "ModularCharacter.h"
 #include "AbilitySystemInterface.h"
-#include "GameplayEffectTypes.h"
 #include "MSCharacterBase.generated.h"
 
 struct FGameplayAbilitySpecHandle;
-class UHealthBarComponent;
 class UGameplayAbility;
 class UGameplayEffect;
 class UMSAbilitySystemComponent;
@@ -67,6 +65,7 @@ protected:
 public:
 	virtual TArray<FGameplayAbilitySpecHandle> GrantAbilities(TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant);
 	virtual void RemoveAbilities(TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove);
+	virtual void SendAbilitiesChangedEvent();
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "GAS | Attributes")
@@ -84,12 +83,4 @@ protected:
 
 	// TODO: Change logic of granting and removing abilities to ability sets
 	virtual void GrantStartingAbilities();
-	virtual void SendAbilitiesChangedEvent();
-
-
-	// =======================
-	// Attribute Change Callbacks (to be overridden by derived classes)
-	// =======================
-
-	// virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 };

@@ -1,8 +1,15 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MSGameplayAbility.h"
 
+#include "MSGameplayAbility.h"
+#include "GameplayEffectTypes.h"
+#include "GameplayTagContainer.h"
+#include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
+
+// ======================
+// Set up and overrides
+// ======================
 
 UMSGameplayAbility::UMSGameplayAbility() : ActivationPolicy(EMSAbilityActivationPolicy::OnInputTriggered)
 {
@@ -33,4 +40,19 @@ void UMSGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, con
 	// UE_LOG(LogTemp, Log, TEXT("UMSGameplayAbility Ended: %s (Was Cancelled: %s)"), *GetName(), bWasCancelled ? TEXT("True") : TEXT("False"));
 
 	// Final cleanup logic here.
+}
+
+UMSAbilitySystemComponent* UMSGameplayAbility::GetMSAbilitySystemComponentFromActorInfo() const
+{
+	return Cast<UMSAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo());
+}
+
+
+// ======================
+// Activation Properties
+// ======================
+
+EMSAbilityActivationPolicy UMSGameplayAbility::GetActivationPolicy() const
+{
+	return ActivationPolicy;
 }

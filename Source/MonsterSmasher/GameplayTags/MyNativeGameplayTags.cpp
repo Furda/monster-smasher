@@ -152,4 +152,5 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Effect_InitAttributes, "Effect.InitAttributes");
 
 // ----- Cooldowns -----
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Healing, "Cooldown.Healing");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown, "Cooldown");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Cooldown_Heal, "Cooldown.Heal");
