@@ -2,16 +2,18 @@
 
 #include "CoreMinimal.h"
 #include "FMovementWeaponConfig.h"
-#include "Engine/DataTable.h" // Required if you plan to use this struct in a data table
+#include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
+
 #include "FWeaponConfig.generated.h"
 
+class UGameplayAbility;
 
 // Delegate for any specific events the weapon needs (optional)
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponDataChange);
 
 /**
- * FWeaponData: Holds all the essential, non-runtime statistics and assets for a weapon.
+ *  Holds all the essential, non-runtime statistics and assets for a weapon.
  */
 USTRUCT(BlueprintType)
 struct FWeaponConfig
@@ -72,13 +74,13 @@ struct FWeaponConfig
 
 	/** The Anim Montage to play when using the primary attack. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
-	TSubclassOf<class UAnimInstance> AnimClass;
+	TSubclassOf<UAnimInstance> AnimClass;
 
 	// --- Abilities ---
 
 	/** The Gameplay Abilities to grant when this weapon is equipped */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Abilities")
-	TArray<TSubclassOf<class UGameplayAbility>> AbilitiesToGrant;
+	TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant;
 
 	// --- Movement Configs ---
 

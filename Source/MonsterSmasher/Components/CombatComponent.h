@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 
-#include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "CombatComponent.generated.h"
 
 class UMSAttributeSet;
+class UMSAbilitySystemComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MONSTERSMASHER_API UCombatComponent : public UActorComponent
@@ -23,8 +23,6 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	// AbilitySystemInterface
-	// UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystem; }
 
 protected:
 	// Called when the game starts

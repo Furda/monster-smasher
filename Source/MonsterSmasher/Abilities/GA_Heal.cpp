@@ -1,7 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "GA_Heal.h"
+
 #include "Characters/Base/MSCharacterBase.h"
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
@@ -19,10 +21,10 @@ void UGA_Heal::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	// Commit the ability to ensure it can be used
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	// Commit the ability cost 
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UGA_Heal: CommitAbility failed!"));
+		UE_LOG(LogTemp, Warning, TEXT("UGA_Heal: CommitAbilityCost failed!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -30,6 +32,13 @@ void UGA_Heal::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 	// Apply healing effect to the target character
 	AMSCharacterBase* TargetCharacter = Cast<AMSCharacterBase>(ActorInfo->AvatarActor.Get());
 	ApplyHealingEffect(TargetCharacter);
+	
+	if (!CommitAbilityCooldown(Handle, ActorInfo, ActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("UGA_Heal: CommitAbilityCooldown failed!"));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
+		return;
+	}
 
 	// End the ability after applying the healing effect
 	EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -45,7 +54,7 @@ void UGA_Heal::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGamepl
 
 void UGA_Heal::ApplyHealingEffect(const AMSCharacterBase* TargetCharacter)
 {
-	UMSAbilitySystemComponent* MSASC = Cast<UMSAbilitySystemComponent>(TargetCharacter->GetAbilitySystemComponent());
+	UMSAbilitySystemComponent* MSASC = TargetCharacter->GetMSAbilitySystemComponent();
 	if (TargetCharacter && MSASC && HealingEffect)
 	{
 		// Create and apply a healing effect
@@ -60,7 +69,6 @@ void UGA_Heal::ApplyHealingEffect(const AMSCharacterBase* TargetCharacter)
 			CostSpecHandle.Data->SetSetByCallerMagnitude(HealMagnitudeTag, HealingAmount);
 
 			MSASC->ApplyGameplayEffectSpecToSelf(*CostSpecHandle.Data.Get());
-			UE_LOG(LogTemp, Log, TEXT("Healing effect applied to %s"), *TargetCharacter->GetName());
 		}
 	}
 	else

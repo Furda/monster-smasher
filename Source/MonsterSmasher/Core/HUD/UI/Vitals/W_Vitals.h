@@ -35,9 +35,9 @@ public:
 protected:
 	/** Health Bar reference (must match widget name in Blueprint) */
 	UPROPERTY(meta = (BindWidget))
-	UW_HealthBar* HealthBar;
+	TObjectPtr<UW_HealthBar> HealthBar;
 
 	/** Stamina Bar reference (must match widget name in Blueprint) */
 	UPROPERTY(meta = (BindWidget))
-	UW_StaminaBar* StaminaBar;
+	TObjectPtr<UW_StaminaBar> StaminaBar;
 };

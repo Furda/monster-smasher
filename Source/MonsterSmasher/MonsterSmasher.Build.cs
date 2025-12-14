@@ -24,7 +24,10 @@ public class MonsterSmasher : ModuleRules
 			"ModularGameplayActors"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"GameplayAbilities"
+		});
 
 		PublicIncludePaths.AddRange(new string[] {
 			"MonsterSmasher",
@@ -33,9 +36,11 @@ public class MonsterSmasher : ModuleRules
 			"MonsterSmasher/Variant_Combat/AI",
 			"MonsterSmasher/Variant_SideScrolling",
 			"MonsterSmasher/Variant_SideScrolling/Gameplay",
-			"MonsterSmasher/Variant_SideScrolling/AI"
+			"MonsterSmasher/Variant_SideScrolling/AI",
 		});
-
+		
+		
+	
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

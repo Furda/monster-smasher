@@ -1,7 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
+
 #include "GA_LightAttack.h"
+
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
@@ -34,10 +36,10 @@ void UGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	// Commit the ability to ensure it can be used
-	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
+	if (!CommitAbilityCost(Handle, ActorInfo, ActivationInfo))
 	{
 		// If CommitAbility fails (e.g., cooldown not ready), or no montage is set, end immediately.
-		UE_LOG(LogTemp, Warning, TEXT("UGA_LightAttack: CommitAbility failed!"));
+		UE_LOG(LogTemp, Error, TEXT("UGA_LightAttack: CommitAbilityCost failed!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -110,6 +112,13 @@ void UGA_LightAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 
 void UGA_LightAttack::OnMontageFinished()
 {
+	if (!CommitAbilityCooldown(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true))
+	{
+		UE_LOG(LogTemp, Error, TEXT("UGA_LightAttack: CommitAbilityCooldown failed!"));
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+		return;
+	}
+	
 	// Clean up and end the ability when the montage is done.
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }

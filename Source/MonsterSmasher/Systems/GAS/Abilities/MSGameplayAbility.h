@@ -4,7 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+
 #include "MSGameplayAbility.generated.h"
+
+class UMSAbilitySystemComponent;
+class UTexture2D;
+
 
 // Define Activation Policy enum
 // This is specific to the game design and how MSASC might interpret it,
@@ -23,6 +28,7 @@ enum class EMSAbilityActivationPolicy : uint8
 	OnGranted UMETA(DisplayName = "On Granted"),
 };
 
+
 /**
  * Base class for all Gameplay Abilities in Monster Smasher.
  * Provides custom activation policies and other common functionality.
@@ -32,21 +38,13 @@ class MONSTERSMASHER_API UMSGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 
+
+	// ======================
+	// Set up and overrides
+	// ======================
+
 public:
 	UMSGameplayAbility();
-
-	// This dictates when and how the ability attempts to activate based on input.
-	// NOTE: This does nothing right now
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability Activation")
-	EMSAbilityActivationPolicy ActivationPolicy;
-
-	// Getter for the activation policy
-	EMSAbilityActivationPolicy GetActivationPolicy() const { return ActivationPolicy; }
-
-	// Determine if this ability should be shown in the skill bar UI
-	// This can be used by UI systems to filter and display abilities appropriately.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
-	bool bShouldShowInSkillBar = false;
 
 protected:
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -61,4 +59,35 @@ protected:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                        const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility,
 	                        bool bWasCancelled) override;
+
+	virtual UMSAbilitySystemComponent* GetMSAbilitySystemComponentFromActorInfo() const;
+
+
+	// ======================
+	// Activation Properties
+	// ======================
+
+public:
+	// Getter for the activation policy
+	EMSAbilityActivationPolicy GetActivationPolicy() const;
+
+protected:
+	// This dictates when and how the ability attempts to activate based on input.
+	// NOTE: This does nothing right now
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability Activation")
+	EMSAbilityActivationPolicy ActivationPolicy;
+
+
+	// ======================
+	// UI Properties
+	// ======================
+
+public:
+	// Determine if this ability should be shown in the Abilities bar UI
+	// This can be used by UI systems to filter and display abilities appropriately.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI | Abilities Bar")
+	bool bShouldShowInAbilitiesBar = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI | Abilities Bar")
+	TObjectPtr<UTexture2D> AbilityIcon;
 };
