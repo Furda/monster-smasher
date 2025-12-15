@@ -7,7 +7,7 @@
 #include "Abilities/GameplayAbilityTypes.h"
 #include "GameplayTagContainer.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
-#include "Weapons/WeaponManagerComponent.h"
+#include "Systems/WeaponSystem/WeaponManagerComponent.h"
 
 UGA_EquipWeapon::UGA_EquipWeapon()
 {

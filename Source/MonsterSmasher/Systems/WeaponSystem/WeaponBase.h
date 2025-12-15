@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Data/FWeaponConfig.h"
 #include "GameFramework/Actor.h"
 #include "WeaponBase.generated.h"
 
 class UStaticMesh;
+class UWeaponDataAsset;
 
 UCLASS()
 class MONSTERSMASHER_API AWeaponBase : public AActor
@@ -21,9 +21,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	/** This struct holds all the non-runtime configuration for the weapon. */
+	// This data asset holds all configuration for the weapon.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
-	FWeaponConfig WeaponConfig;
+	TObjectPtr<UWeaponDataAsset> WeaponData;
 
 protected:
 	// Called when the game starts or when spawned

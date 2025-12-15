@@ -13,7 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemComponent.h"
 #include "Core/PlayerController/MSPlayerController.h"
-#include "Weapons/WeaponManagerComponent.h"
+#include "Systems/WeaponSystem/WeaponManagerComponent.h"
 
 
 // =======================

@@ -15,7 +15,7 @@ AWeaponBase::AWeaponBase()
 	// Create Weapon mesh 
 	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
 
-	// 2. Set this component as the Actor's Root
+	// Set this component as the Actor's Root
 	SetRootComponent(WeaponMesh.Get());
 
 	// Disable collision from weapon mesh

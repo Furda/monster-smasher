@@ -6,14 +6,13 @@
 #include "GameplayAbilitySpecHandle.h"
 #include "Components/ActorComponent.h"
 #include "GameplayTagContainer.h"
-#include "Data/FWeaponConfig.h"
 #include "WeaponManagerComponent.generated.h"
 
+class UWeaponDataAsset;
 class AWeaponBase;
 
-//  Define the Delegate Signature (no parameters in this example)
+//  Define the Delegate Signature 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponEquippedSignature, TSubclassOf<AWeaponBase>, WeaponClass);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWeaponUnequippedSignature);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -47,16 +46,16 @@ public:
 	TArray<TSubclassOf<AWeaponBase>> AvailableWeapons;
 
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "Weapons | Abilities")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unarmed Data")
+	TObjectPtr<UWeaponDataAsset> UnarmedData;
+	
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Weapons | Abilities")
 	TArray<FGameplayAbilitySpecHandle> AbilitiesGrantedByWeapon;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Unarmed Properties")
-	FWeaponConfig UnarmedConfig;
 
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "References")
 	TObjectPtr<class AMSCharacterBase> OwningCharacter;
 
-	UPROPERTY(BlueprintReadOnly, Transient, Category = "Runtime", ReplicatedUsing=OnRep_EquippedWeaponInstance)
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Weapon", ReplicatedUsing=OnRep_EquippedWeaponInstance)
 	TObjectPtr<AWeaponBase> EquippedWeaponInstance;
 
 	// ===================================
@@ -103,6 +102,7 @@ protected:
 	// ===================================
 	// Weapon Tag Lookup Map 
 	// ===================================
+	
 public:
 	// Lookup weapon classes by tag quickly
 	void GetWeaponClassesForTag(const FGameplayTag& Tag, TArray<TSubclassOf<AWeaponBase>>& OutClasses) const;

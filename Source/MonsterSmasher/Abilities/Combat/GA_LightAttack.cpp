@@ -7,11 +7,11 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "AnimNotifies/AN_HitBoxStart.h"
 #include "Characters/Base/MSCharacterBase.h"
+#include "AnimNotifies/AN_HitBoxStart.h"
 #include "Systems/GAS/Tasks/WaitAnimNotifyHitBox.h"
+#include "Systems/CombatSystem/CombatSystemComponent.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
-// #include "Components/CombatComponent.h" // Combo logic
 
 
 UGA_LightAttack::UGA_LightAttack()
@@ -43,22 +43,53 @@ void UGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
+	
+	// Get Combat System Component
+	UCombatSystemComponent* CombatComp = GetAvatarActorFromActorInfo()
+		->FindComponentByClass<UCombatSystemComponent>();
+	
+	if (!CombatComp)
+	{
+		CancelAbility(Handle, ActorInfo, ActivationInfo, true);
+		return;
+	}
+	
+	// TODO: Check if we need failures tags and if we need to send a gameplay event on failure
+	// Check if the combat component can activate the ability
+	FGameplayTagContainer FailureTags;	
+	if (!CombatComp->CanActivateAbility(AbilityDataTag, FailureTags))
+	{
+		// Optionally send gameplay event with failure reason for UI feedback
+		FGameplayEventData EventData;
+		EventData.EventTag = FGameplayTag::RequestGameplayTag("Combat.Event.AbilityFailed");
+		EventData.InstigatorTags = FailureTags;
+        
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			GetAvatarActorFromActorInfo(), 
+			EventData.EventTag, 
+			EventData
+		);
+        
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+	
+	// Register this attack with combo system
+	CombatComp->RegisterComboAttack(AbilityDataTag);
 
+	// Get the appropriate animation for current combo step
+	AttackMontage = CombatComp->GetCurrentComboMontage(AbilityDataTag);
 	if (!AttackMontage)
 	{
-		// If no montage is set, end immediately (or log an error)
-		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
-		UE_LOG(LogTemp, Error, TEXT("UGA_LightAttack: No AttackMontage set! Ending ability immediately."));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
 	}
 
 	// Create the task to play the montage and wait for it to finish
 	UAbilityTask_PlayMontageAndWait* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
-		NAME_None, // Task Instance Name (optional)
-		AttackMontage,
-		1.0f, // Rate
-		"Melee01", // Start Section
-		true // Should interrupt when ability is canceled
+		NAME_None,
+		AttackMontage
 	);
 
 	// Bind the completion and interruption events
@@ -66,10 +97,10 @@ void UGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	MontageTask->OnInterrupted.AddDynamic(this, &UGA_LightAttack::OnMontageFinished);
 	MontageTask->OnCancelled.AddDynamic(this, &UGA_LightAttack::OnMontageFinished);
 	MontageTask->OnBlendOut.AddDynamic(this, &UGA_LightAttack::OnMontageFinished);
-
-	// Start the task
 	MontageTask->ReadyForActivation();
 
+	// --------------------- Hit trace: Gameplay Task -------------------------
+	
 	// Wait for the Hit Box Notify to trigger
 	// NOTE: The NotifyName MUST match the name of the Anim Notify you place in the montage.
 	UWaitAnimNotifyHitBox* HitBoxTask = UWaitAnimNotifyHitBox::WaitForHitBoxNotify(
@@ -83,6 +114,16 @@ void UGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	HitBoxTask->OnHitBoxWindowOpen.AddDynamic(this, &UGA_LightAttack::OnHitBoxOpen);
 	HitBoxTask->OnAbilityCancelled.AddDynamic(this, &UGA_LightAttack::OnHitBoxTaskCancelled);
 	HitBoxTask->ReadyForActivation();
+	
+	// --------------------- Hit trace: Gameplay Event -------------------------
+	
+	// Listen for hit events from anim notifies
+	// UAbilityTask_WaitGameplayEvent* HitEventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+	// 	this,
+	// 	FGameplayTag::RequestGameplayTag("Combat.Event.WeaponHit")
+	// );
+	// HitEventTask->EventReceived.AddDynamic(this, &UGA_LightAttack::OnWeaponHitEvent);
+	// HitEventTask->ReadyForActivation();
 
 
 	// *** FUTURE COMBO LOGIC GOES HERE: ***
@@ -96,8 +137,7 @@ void UGA_LightAttack::EndAbility(const FGameplayAbilitySpecHandle Handle, const 
 	// Stop any active montage if the ability is ending early
 	if (IsActive())
 	{
-		AMSCharacterBase* Character = Cast<AMSCharacterBase>(ActorInfo->AvatarActor.Get());
-		if (Character)
+		if (AMSCharacterBase* Character = Cast<AMSCharacterBase>(ActorInfo->AvatarActor.Get()))
 		{
 			UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
 			if (AnimInstance && AnimInstance->Montage_IsPlaying(AttackMontage))
@@ -119,7 +159,13 @@ void UGA_LightAttack::OnMontageFinished()
 		return;
 	}
 	
-	// Clean up and end the ability when the montage is done.
+	// Reset combo on interrupt (e.g., got hit)
+	UCombatSystemComponent* CombatComp = GetAvatarActorFromActorInfo()
+		->FindComponentByClass<UCombatSystemComponent>();
+	if (CombatComp)
+	{
+		CombatComp->ResetCombo();
+	}
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

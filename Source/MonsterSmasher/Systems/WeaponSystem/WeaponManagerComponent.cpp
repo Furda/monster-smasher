@@ -3,9 +3,11 @@
 #include "WeaponManagerComponent.h"
 #include "Characters/Base/MSCharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Systems/WeaponSystem/Data/WeaponDataAsset.h"
+#include "Systems/CombatSystem/CombatSystemComponent.h"
+#include "Systems/WeaponSystem/WeaponBase.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
-#include "Net/UnrealNetwork.h" // Required for replication macros
-#include "Weapons/WeaponBase.h"
+#include "Net/UnrealNetwork.h"
 
 // ===================================
 // Setup and overrides
@@ -144,6 +146,7 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 				WeaponClass = AvailableWeapons[EquippedWeaponInstanceIndex + 1];
 			}
 		}
+		
 		// If the current equip weapon is the first index, equip the last weapon, else equip the previous one
 		else if (FollowingWeaponTag.MatchesTagExact(TAG_Event_Weapon_Equip_Previous))
 		{
@@ -190,13 +193,19 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 	SpawnWeaponForCharacter(WeaponClass);
 
 	// Grant the abilities from the equipped weapon
-	if (!EquippedWeaponInstance->WeaponConfig.AbilitiesToGrant.IsEmpty())
+	if (!EquippedWeaponInstance->WeaponData->AbilitiesToGrant.IsEmpty())
 	{
 		AbilitiesGrantedByWeapon = OwningCharacter->GrantAbilities(
-			EquippedWeaponInstance->WeaponConfig.AbilitiesToGrant);
+			EquippedWeaponInstance->WeaponData->AbilitiesToGrant);
 	}
 
 	SetEquippedWeaponProperties();
+	
+	// Update Combat System with new weapon data
+	if (UCombatSystemComponent* CombatComp = GetOwner()->FindComponentByClass<UCombatSystemComponent>())
+	{
+		CombatComp->UpdateCombatData(EquippedWeaponInstance->WeaponData);
+	}
 
 	// Broadcast the delegate
 	OnWeaponEquipped.Broadcast(WeaponClass);
@@ -281,7 +290,7 @@ void UWeaponManagerComponent::SpawnWeaponForCharacter(TSubclassOf<AWeaponBase> W
 	EquippedWeaponInstance->AttachToComponent(
 		OwningCharacter->GetMesh(),
 		AttachRules,
-		EquippedWeaponInstance->WeaponConfig.EquippedSocketName
+		EquippedWeaponInstance->WeaponData->EquippedSocketName
 	);
 }
 
@@ -294,19 +303,19 @@ void UWeaponManagerComponent::SetEquippedWeaponProperties()
 		return;
 	}
 
-	FWeaponConfig CurrentWeaponConfig = EquippedWeaponInstance ? EquippedWeaponInstance->WeaponConfig : UnarmedConfig;
+	UWeaponDataAsset* CurrentWeaponData = EquippedWeaponInstance ? EquippedWeaponInstance->WeaponData : UnarmedData;
 
 	// Change the AnimInstance to the Weapon AnimInstance
-	OwningCharacter->GetMesh()->SetAnimInstanceClass(CurrentWeaponConfig.AnimClass);
+	OwningCharacter->GetMesh()->SetAnimInstanceClass(CurrentWeaponData->WeaponAnimBP);
 
 	// Set movement properties from the equipped weapon
 	if (UCharacterMovementComponent* MovementComponent = OwningCharacter->GetCharacterMovement())
 	{
-		MovementComponent->MaxCustomMovementSpeed = CurrentWeaponConfig.MovementWeaponConfig.
+		MovementComponent->MaxCustomMovementSpeed = CurrentWeaponData->MovementWeaponConfig.
 		                                                                MaxWalkSpeed;
-		MovementComponent->bOrientRotationToMovement = CurrentWeaponConfig.MovementWeaponConfig.
+		MovementComponent->bOrientRotationToMovement = CurrentWeaponData->MovementWeaponConfig.
 		                                                                   OrientRotationToMovement;
-		MovementComponent->bUseControllerDesiredRotation = CurrentWeaponConfig.MovementWeaponConfig.
+		MovementComponent->bUseControllerDesiredRotation = CurrentWeaponData->MovementWeaponConfig.
 		                                                                       UseControllerDesiredRotation;
 	}
 }
@@ -339,15 +348,15 @@ void UWeaponManagerComponent::BuildWeaponTagLookup()
 			continue;
 		}
 
-		// Get class default object (CDO) to read WeaponConfig without spawning
+		// Get class default object (CDO) to read WeaponData without spawning
 		const AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
 		if (!CDO)
 		{
 			continue;
 		}
 
-		// Get tag from WeaponConfig
-		const FGameplayTag& Tag = CDO->WeaponConfig.WeaponTag;
+		// Get tag from WeaponData
+		const FGameplayTag& Tag = CDO->WeaponData->WeaponTag;
 		if (Tag.IsValid())
 		{
 			WeaponClassesByTag.Add(Tag, WeaponClass);
@@ -368,9 +377,9 @@ void UWeaponManagerComponent::RebuildWeaponTagLookup()
 		}
 
 		AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
-		if (CDO && CDO->WeaponConfig.WeaponTag.IsValid())
+		if (CDO && CDO->WeaponData->WeaponTag.IsValid())
 		{
-			WeaponClassesByTag.Add(CDO->WeaponConfig.WeaponTag, WeaponClass);
+			WeaponClassesByTag.Add(CDO->WeaponData->WeaponTag, WeaponClass);
 		}
 	}
 }

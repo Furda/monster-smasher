@@ -19,8 +19,8 @@ public:
 	UGA_LightAttack();
 
 	// Montage to play for the attack animation. Must contain the "HitBoxStart" Anim Notify.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Light Attack")
-	UAnimMontage* AttackMontage;
+	UPROPERTY( BlueprintReadOnly, Transient, Category = "Light Attack")
+	TObjectPtr<UAnimMontage> AttackMontage;
 
 	// Begin UGameplayAbility interface
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
@@ -32,6 +32,10 @@ public:
 	// End UGameplayAbility interface
 
 protected:
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Combat")
+	FGameplayTag AbilityDataTag;
+	
 	// Called when the attack montage finishes, is interrupted, or cancelled.
 	UFUNCTION()
 	void OnMontageFinished();
