@@ -9,11 +9,12 @@
 #include "Systems/GAS/Attributes/MSAttributeSet.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
+#include "Input/FMSInputAction.h"
 
 
-// =======================
+// =====================================================================
 // Set up and overrides
-// =======================
+// =====================================================================
 
 AMSCharacterBase::AMSCharacterBase()
 {
@@ -44,9 +45,9 @@ void AMSCharacterBase::OnRep_PlayerState()
 }
 
 
-// =======================
+// =====================================================================
 // GAS Set up and overrides
-// =======================
+// =====================================================================
 
 UAbilitySystemComponent* AMSCharacterBase::GetAbilitySystemComponent() const
 {
@@ -120,9 +121,55 @@ void AMSCharacterBase::InitAbilitySystemAndAttributes()
 }
 
 
-// =======================
-// Ability Granting (to be overridden by derived classes)
-// =======================
+// =====================================================================
+// Ability Granting
+// =====================================================================
+
+TArray<FGameplayAbilitySpecHandle> AMSCharacterBase::GrantAbilities(
+	TArray<FMSInputAction> AbilitiesToGrant, UObject* SourceObject)
+{
+	if (!AbilitySystemComponent || !HasAuthority())
+	{
+		return TArray<FGameplayAbilitySpecHandle>();
+	}
+
+	TArray<FGameplayAbilitySpecHandle> GrantedAbilitiesHandles;
+	for (const FMSInputAction& AbilityConfig : AbilitiesToGrant)
+	{
+		if (!AbilityConfig.AbilityClass) continue;
+		
+		// Set ability spec (Associate tag, input ID, SourceObject)
+		int32 AbilityInputID = AbilityConfig.InputID == EAbilityInputID::None ? -1 : static_cast<int32>(AbilityConfig.InputID);
+		FGameplayAbilitySpec NewAbilitySpec(AbilityConfig.AbilityClass, 1, AbilityInputID);
+		if (AbilityConfig.InputTag.IsValid()) NewAbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityConfig.InputTag);
+		if (SourceObject) NewAbilitySpec.SourceObject = SourceObject;
+		
+		FGameplayAbilitySpecHandle AbilitySpecHandle = AbilitySystemComponent->GiveAbility(NewAbilitySpec);
+		GrantedAbilitiesHandles.Add(AbilitySpecHandle);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Granted abilities: %d"), GrantedAbilitiesHandles.Num());
+	
+	return GrantedAbilitiesHandles;
+}
+
+
+void AMSCharacterBase::RemoveAbilities(TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove)
+{
+	if (!AbilitySystemComponent || !HasAuthority())
+	{
+		return;
+	}
+
+	for (const FGameplayAbilitySpecHandle AbilitySpecHandle : AbilitiesToRemove)
+	{
+		AbilitySystemComponent->ClearAbility(AbilitySpecHandle);
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Removed abilities: %d"), AbilitiesToRemove.Num());
+}
+
+
 
 // Grant Default/Starting attributes to the character
 void AMSCharacterBase::GrantStartingAttributes()
@@ -169,67 +216,20 @@ void AMSCharacterBase::GrantStartingAbilities()
 		return;
 	}
 
-	for (const TSubclassOf<UGameplayAbility> AbilityClass : StartingAbilities)
+	for (const FMSInputAction& AbilityConfig : StartingAbilities)
 	{
-		// TODO: Change to support the ability tag
-		FGameplayAbilitySpecHandle AbilitySpecHandle = AbilitySystemComponent->GiveAbility(
-			FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE));
+		if (!AbilityConfig.AbilityClass) continue;
+	
 
+		// Set ability spec (Associate tag, input ID, SourceObject)
+		int32 AbilityInputID = AbilityConfig.InputID == EAbilityInputID::None ? -1 : static_cast<int32>(AbilityConfig.InputID);
+		FGameplayAbilitySpec NewAbilitySpec(AbilityConfig.AbilityClass, 1, AbilityInputID);
+		if (AbilityConfig.InputTag.IsValid()) NewAbilitySpec.GetDynamicSpecSourceTags().AddTag(AbilityConfig.InputTag);
+		NewAbilitySpec.SourceObject = this;
+		
+		FGameplayAbilitySpecHandle AbilitySpecHandle = AbilitySystemComponent->GiveAbility(NewAbilitySpec);
 		GrantedAbilities.Add(AbilitySpecHandle);
 	}
-
-	SendAbilitiesChangedEvent();
-}
-
-TArray<FGameplayAbilitySpecHandle> AMSCharacterBase::GrantAbilities(
-	TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant)
-{
-	if (!AbilitySystemComponent || !HasAuthority())
-	{
-		return TArray<FGameplayAbilitySpecHandle>();
-	}
-
-	TArray<FGameplayAbilitySpecHandle> GrantedAbilitiesHandles;
-
-
-	for (const TSubclassOf<UGameplayAbility> AbilityClass : AbilitiesToGrant)
-	{
-		// TODO: Change to support the ability tag
-		FGameplayAbilitySpecHandle AbilitySpecHandle = AbilitySystemComponent->GiveAbility(
-			FGameplayAbilitySpec(AbilityClass, 1, INDEX_NONE));
-
-		GrantedAbilitiesHandles.Add(AbilitySpecHandle);
-		UE_LOG(LogTemp, Warning, TEXT("Granted ability: %s"), *AbilityClass->GetName());
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Granted abilities: %d"), GrantedAbilitiesHandles.Num());
-
-	SendAbilitiesChangedEvent();
-	return GrantedAbilitiesHandles;
 }
 
 
-void AMSCharacterBase::RemoveAbilities(TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove)
-{
-	if (!AbilitySystemComponent || !HasAuthority())
-	{
-		return;
-	}
-
-	for (const FGameplayAbilitySpecHandle AbilitySpecHandle : AbilitiesToRemove)
-	{
-		AbilitySystemComponent->ClearAbility(AbilitySpecHandle);
-	}
-
-	SendAbilitiesChangedEvent();
-}
-
-void AMSCharacterBase::SendAbilitiesChangedEvent()
-{
-	FGameplayEventData EventData;
-	EventData.EventTag = TAG_Event_Abilities_Changed;
-	EventData.Instigator = this;
-	EventData.Target = this;
-
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, EventData.EventTag, EventData);
-}

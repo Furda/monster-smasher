@@ -7,6 +7,8 @@
 #include "MSAbilitySystemComponent.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAbilitiesChangedSignature);
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class MONSTERSMASHER_API UMSAbilitySystemComponent : public UAbilitySystemComponent
 {
@@ -25,12 +27,23 @@ public:
 	// Input abilities events
 	// ==============================
 
+public:
+	
 	virtual void AbilityLocalInputPressed(int32 InputID) override;
 	virtual void AbilityLocalInputReleased(int32 InputID) override;
 
+	
 	// ==============================
 	// Granting abilities
 	// ==============================
+	
+public:
+	
+	UPROPERTY(BlueprintAssignable, Category = "Abilities Events")
+	FOnAbilitiesChangedSignature OnAbilitiesChanged;
+	
+	// A helper to broadcast the change
+	void BroadcastAbilitiesChanged() const;
 	
 	// Function to give abilities based on a data asset
 	TArray<FGameplayAbilitySpecHandle> GiveAbilitiesFromInputConfig(const class UMSInputConfig* InputConfig,
@@ -41,4 +54,13 @@ protected:
 	TArray<FGameplayAbilitySpec> LastActivatableAbilities;
 	
 	virtual void OnRep_ActivateAbilities() override;
+	virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec) override;
+	virtual void OnRemoveAbility(FGameplayAbilitySpec& AbilitySpec) override;
+	
+	void ScheduleDeferredBroadcast();
+	void ExecuteDeferredBroadcast();
+
+private:
+	FTimerHandle DeferredBroadcastTimer;
+	int32 PendingAbilityChanges = 0;
 };

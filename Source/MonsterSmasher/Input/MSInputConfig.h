@@ -9,26 +9,9 @@
 #include "MSInputConfig.generated.h"
 
 
+struct FMSInputAction;
 class UGameplayAbility;
 class UInputAction;
-
-USTRUCT(BlueprintType)
-struct FMSInputAction
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<const UInputAction> InputAction = nullptr;
-
-	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "InputTag,Ability"))
-	FGameplayTag InputTag;
-
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UGameplayAbility> AbilityClass;
-
-	UPROPERTY(EditDefaultsOnly)
-	EAbilityInputID InputID = EAbilityInputID::None;
-};
 
 /**
  * UMSInputConfig

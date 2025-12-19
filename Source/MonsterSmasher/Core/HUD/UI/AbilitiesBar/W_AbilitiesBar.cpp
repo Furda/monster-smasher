@@ -9,8 +9,6 @@
 #include "Systems/GAS/Abilities/MSGameplayAbility.h"
 #include "AbilitySlot/W_AbilitySlot.h"
 #include "Components/HorizontalBox.h"
-#include "EditorState/EditorState.h"
-#include "Trace/Analysis.h"
 
 
 void UW_AbilitiesBar::NativeConstruct()
@@ -27,6 +25,12 @@ void UW_AbilitiesBar::NativeDestruct()
 		CachedASC->RemoveGameplayEventTagContainerDelegate(EventTags, AbilitiesChangedEventHandle);
 		AbilitiesChangedEventHandle.Reset();
 	}
+
+	if (CachedASC)
+	{
+		CachedASC->OnAbilitiesChanged.RemoveDynamic(this, &UW_AbilitiesBar::HandleOnAbilitiesChanged);
+	}
+	
 	Super::NativeDestruct();
 }
 
@@ -40,48 +44,37 @@ void UW_AbilitiesBar::InitializeWithGAS(UMSAbilitySystemComponent* InASC)
 	{
 		return;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("UW_AbilitiesBar::InitializeWithGAS"));
 	
 	// cache references
 	CachedASC = InASC;
-
-	// Bind to gameplay event with a specific tag you want to listen for:
-	FGameplayTagContainer EventTags;
-	EventTags.AddTag(AbilitiesChangedEventTag);
-	AbilitiesChangedEventHandle = CachedASC->AddGameplayEventTagContainerDelegate(
-		EventTags,
-		FGameplayEventTagMulticastDelegate::FDelegate::CreateUObject(
-			this, &UW_AbilitiesBar::HandleGameplayEvent
-		)
-	);
+    
+	// Unbind first to prevent double-binding
+	if (CachedASC->OnAbilitiesChanged.IsBound())
+	{
+		CachedASC->OnAbilitiesChanged.RemoveDynamic(this, &UW_AbilitiesBar::HandleOnAbilitiesChanged);
+	}
 	
-	// Refresh abilities bar
+	CachedASC->OnAbilitiesChanged.AddDynamic(this, &UW_AbilitiesBar::HandleOnAbilitiesChanged);
+	
+	// Initial refresh
 	RefreshAbilitySlots();
 }
 
-void UW_AbilitiesBar::HandleGameplayEvent(const FGameplayTag EventTag, const FGameplayEventData* Payload)
+void UW_AbilitiesBar::HandleOnAbilitiesChanged()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UW_AbilitiesBar::HandleGameplayEvent: Received Gameplay Event: %s"),
-	       *EventTag.ToString());
+	UE_LOG(LogTemp, Warning, TEXT("[%s] UW_AbilitiesBar::HandleOnAbilitiesChanged - CALLED!"),
+		   GetWorld()->GetNetMode() == NM_ListenServer ? TEXT("SERVER") : TEXT("CLIENT"));
 	
-	if (EventTag == AbilitiesChangedEventTag)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UW_AbilitiesBar::HandleGameplayEvent: Refreshing abilities bar..."));
 		RefreshAbilitySlots();
-	}
 }
 
 void UW_AbilitiesBar::RefreshAbilitySlots()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UW_AbilitiesBar::RefreshAbilitySlots"));
-	
 	AbilitySlotsContainer->ClearChildren();
 
 	// Get all granted abilities
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilities;
 	CachedASC->GetAllAbilities(GrantedAbilities);
-	
 
 	for (const FGameplayAbilitySpecHandle AbilitySpecHandle : GrantedAbilities)
 	{

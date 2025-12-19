@@ -30,10 +30,16 @@ void UWeaponManagerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// This might change when we implement the combat component or to some interface
-	OwningCharacter = Cast<AMSCharacterBase>(GetOwner());
+	// OwningCharacter = Cast<AMSCharacterBase>(GetOwner());
+	
+	// Set Combat System with Unarmed data
+	if (UCombatSystemComponent* CombatComp = GetCombatSystemComponent())
+	{
+		CombatComp->UpdateCombatData(UnarmedData);
+	}
 
 	// Cache Weapon lookup in the beginning so it is fast to access later
-	BuildWeaponTagLookup();
+	// BuildWeaponTagLookup();
 }
 
 
@@ -56,51 +62,61 @@ void UWeaponManagerComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 	// DOREPLIFETIME_CONDITION(UWeaponManagerComponent, EquippedWeaponInstance, COND_OwnerOnly);
 }
 
+AMSCharacterBase* UWeaponManagerComponent::GetOwningMSCharacter() const
+{
+	return Cast<AMSCharacterBase>(GetOwner());
+}
+
+UCombatSystemComponent* UWeaponManagerComponent::GetCombatSystemComponent() const
+{
+	return GetOwner()->FindComponentByClass<UCombatSystemComponent>();
+}
+
 // ===================================
 // Actions: The actual functions to perform actions
 // ===================================
 
 // Equip weapon by tag and broadcast the event
-void UWeaponManagerComponent::EquipWeaponByTag(const FGameplayTag& WeaponTag)
-{
-	if (!OwningCharacter)
-	{
-		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::EquipWeaponByTag: OwningCharacter is invalid!"));
-		return;
-	}
-
-	// Find weapon class by weapon tag from the available weapons
-	TArray<TSubclassOf<AWeaponBase>> WeaponClasses;
-	GetWeaponClassesForTag(WeaponTag, WeaponClasses);
-
-	// Validate we found at least one class
-	if (WeaponClasses.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("UWeaponManagerComponent::EquipWeaponByTag: No weapon class found for tag %s"),
-		       *WeaponTag.ToString());
-		return;
-	}
-
-	// Get the first class since we expect only one class per tag
-	// NOTE: In the future this might change to support multiple classes per tag
-	TSubclassOf<AWeaponBase> WeaponClass = WeaponClasses[0];
-
-	// if trying to equip the same weapon, unequip it and end the action
-	if (EquippedWeaponInstance && EquippedWeaponInstance->IsA(WeaponClass))
-	{
-		UnequipWeapon(false);
-		return;
-	}
-
-	// If a weapon is already equipped, unequip it first
-	UnequipWeapon(true);
-
-	SpawnWeaponForCharacter(WeaponClass);
-	SetEquippedWeaponProperties();
-
-	// Broadcast the delegate, passing the CLASS as defined in your signature
-	OnWeaponEquipped.Broadcast(WeaponClass);
-}
+// void UWeaponManagerComponent::EquipWeaponByTag(const FGameplayTag& WeaponTag)
+// {
+// 	if (!OwningCharacter)
+// 	{
+// 		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::EquipWeaponByTag: OwningCharacter is invalid!"));
+// 		return;
+// 	}
+//
+// 	// Find weapon class by weapon tag from the available weapons
+// 	TArray<TSubclassOf<AWeaponBase>> WeaponClasses;
+// 	GetWeaponClassesForTag(WeaponTag, WeaponClasses);
+//
+// 	// Validate we found at least one class
+// 	if (WeaponClasses.Num() == 0)
+// 	{
+// 		UE_LOG(LogTemp, Warning, TEXT("UWeaponManagerComponent::EquipWeaponByTag: No weapon class found for tag %s"),
+// 		       *WeaponTag.ToString());
+// 		return;
+// 	}
+//
+// 	// Get the first class since we expect only one class per tag
+// 	// NOTE: In the future this might change to support multiple classes per tag
+// 	TSubclassOf<AWeaponBase> WeaponClass = WeaponClasses[0];
+//
+// 	// if trying to equip the same weapon, unequip it and end the action
+// 	if (EquippedWeaponInstance && EquippedWeaponInstance->IsA(WeaponClass))
+// 	{
+// 		UnequipWeapon(false);
+// 		return;
+// 	}
+//
+// 	// If a weapon is already equipped, unequip it first
+// 	UnequipWeapon(true);
+//
+// 	SpawnWeaponForCharacter(WeaponClass);
+// 	SetEquippedWeaponProperties();
+//
+// 	// Broadcast the delegate, passing the CLASS as defined in your signature
+// 	OnWeaponEquipped.Broadcast(WeaponClass);
+// }
 
 // Equip weapon by the following weapon tag
 void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& FollowingWeaponTag)
@@ -110,14 +126,15 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 	{
 		return;
 	}
-
+ 
+	AMSCharacterBase* OwningCharacter = GetOwningMSCharacter();
 	if (!OwningCharacter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::EquipWeaponByFollowingTag: OwningCharacter is invalid!"));
 		return;
 	}
 
-	TSubclassOf<AWeaponBase> WeaponClass;
+	TObjectPtr<UWeaponDataAsset> NewWeaponData;
 
 	// Get the weapon to equip
 	if (EquippedWeaponInstance)
@@ -125,10 +142,10 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 		// If the current equip weapon is the last index, equip the first weapon, else equip the next one
 		if (FollowingWeaponTag.MatchesTagExact(TAG_Event_Weapon_Equip_Next))
 		{
-			int32 LastIndex = AvailableWeapons.Num() - 1;
-			int32 EquippedWeaponInstanceIndex = AvailableWeapons.Find(EquippedWeaponInstance.GetClass());
+			int32 LastIndex = AvailableWeaponsData.Num() - 1;
+			int32 EquippedWeaponDataInstanceIndex = AvailableWeaponsData.Find(EquippedWeaponInstance->WeaponData);
 
-			if (EquippedWeaponInstanceIndex == INDEX_NONE)
+			if (EquippedWeaponDataInstanceIndex == INDEX_NONE)
 			{
 				UE_LOG(LogTemp, Error,
 				       TEXT(
@@ -137,22 +154,21 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 				return;
 			}
 
-			if (EquippedWeaponInstanceIndex == LastIndex)
+			if (EquippedWeaponDataInstanceIndex == LastIndex)
 			{
-				WeaponClass = AvailableWeapons[0];
+				NewWeaponData = AvailableWeaponsData[0];
 			}
 			else
 			{
-				WeaponClass = AvailableWeapons[EquippedWeaponInstanceIndex + 1];
+				NewWeaponData = AvailableWeaponsData[EquippedWeaponDataInstanceIndex + 1];
 			}
 		}
-		
 		// If the current equip weapon is the first index, equip the last weapon, else equip the previous one
 		else if (FollowingWeaponTag.MatchesTagExact(TAG_Event_Weapon_Equip_Previous))
 		{
-			int32 EquippedWeaponInstanceIndex = AvailableWeapons.Find(EquippedWeaponInstance.GetClass());
+			int32 EquippedWeaponDataInstanceIndex = AvailableWeaponsData.Find(EquippedWeaponInstance->WeaponData);
 
-			if (EquippedWeaponInstanceIndex == INDEX_NONE)
+			if (EquippedWeaponDataInstanceIndex == INDEX_NONE)
 			{
 				UE_LOG(LogTemp, Error,
 				       TEXT(
@@ -161,13 +177,13 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 				return;
 			}
 
-			if (EquippedWeaponInstanceIndex == 0)
+			if (EquippedWeaponDataInstanceIndex == 0)
 			{
-				WeaponClass = AvailableWeapons[AvailableWeapons.Num() - 1];
+				NewWeaponData = AvailableWeaponsData[AvailableWeaponsData.Num() - 1];
 			}
 			else
 			{
-				WeaponClass = AvailableWeapons[EquippedWeaponInstanceIndex - 1];
+				NewWeaponData = AvailableWeaponsData[EquippedWeaponDataInstanceIndex - 1];
 			}
 		}
 	}
@@ -175,40 +191,46 @@ void UWeaponManagerComponent::EquipWeaponByFollowingTag(const FGameplayTag& Foll
 	{
 		if (FollowingWeaponTag.MatchesTagExact(TAG_Event_Weapon_Equip_Next))
 		{
-			WeaponClass = AvailableWeapons[0];
+			NewWeaponData = AvailableWeaponsData[0];
 		}
 		else if (FollowingWeaponTag.MatchesTagExact(TAG_Event_Weapon_Equip_Previous))
 		{
-			WeaponClass = AvailableWeapons[AvailableWeapons.Num() - 1];
+			NewWeaponData = AvailableWeaponsData[AvailableWeaponsData.Num() - 1];
 		}
 	}
 
-	// If a weapon is already equipped, unequip it first
+	// If a weapon is already equipped, remove abilities
 	if (EquippedWeaponInstance)
 	{
-		UnequipWeapon(true);
+		if (!EquippedWeaponInstance->WeaponData->AbilitiesToGrant.IsEmpty())
+		{
+			// Remove abilities of the weapon
+			OwningCharacter->RemoveAbilities(AbilitiesGrantedByWeapon);
+			AbilitiesGrantedByWeapon.Empty();
+		}
+		
 	}
 
 	// Equip the new weapon
-	SpawnWeaponForCharacter(WeaponClass);
+	SpawnWeaponForCharacter(NewWeaponData);
 
 	// Grant the abilities from the equipped weapon
 	if (!EquippedWeaponInstance->WeaponData->AbilitiesToGrant.IsEmpty())
 	{
 		AbilitiesGrantedByWeapon = OwningCharacter->GrantAbilities(
-			EquippedWeaponInstance->WeaponData->AbilitiesToGrant);
+			EquippedWeaponInstance->WeaponData->AbilitiesToGrant, EquippedWeaponInstance);
 	}
 
-	SetEquippedWeaponProperties();
+	SetEquippedWeaponProperties(NewWeaponData);
 	
 	// Update Combat System with new weapon data
-	if (UCombatSystemComponent* CombatComp = GetOwner()->FindComponentByClass<UCombatSystemComponent>())
+	if (UCombatSystemComponent* CombatComp = GetCombatSystemComponent())
 	{
 		CombatComp->UpdateCombatData(EquippedWeaponInstance->WeaponData);
 	}
 
 	// Broadcast the delegate
-	OnWeaponEquipped.Broadcast(WeaponClass);
+	OnWeaponEquipped.Broadcast(NewWeaponData);
 }
 
 // Unequip weapon and broadcast the event
@@ -225,6 +247,13 @@ void UWeaponManagerComponent::UnequipWeapon(bool bIsEquippingNextWeapon)
 		UE_LOG(LogTemp, Log, TEXT("UWeaponManagerComponent::UnequipWeapon: No weapon is currently equipped."));
 		return;
 	}
+	
+	AMSCharacterBase* OwningCharacter = GetOwningMSCharacter();
+	if (!OwningCharacter)
+	{
+		UE_LOG(LogTemp, Log, TEXT("UWeaponManagerComponent::UnequipWeapon: OwningCharacter is invalid!"));
+		return;
+	}
 
 	// Destroy equipped weapon instance
 	EquippedWeaponInstance->Destroy();
@@ -238,97 +267,135 @@ void UWeaponManagerComponent::UnequipWeapon(bool bIsEquippingNextWeapon)
 	if (!bIsEquippingNextWeapon)
 	{
 		// Change back to Unarmed
-		SetEquippedWeaponProperties();
+		SetEquippedWeaponProperties(UnarmedData);
 
+		// Update Combat System with Unarmed data
+		if (UCombatSystemComponent* CombatComp = GetCombatSystemComponent())
+		{
+			CombatComp->UpdateCombatData(UnarmedData);
+		}
+		
 		// Broadcast event
 		OnWeaponUnequipped.Broadcast();
 	}
 }
 
-void UWeaponManagerComponent::SpawnWeaponForCharacter(TSubclassOf<AWeaponBase> WeaponClass)
+void UWeaponManagerComponent::SpawnWeaponForCharacter(UWeaponDataAsset* InWeaponData)
 {
+	AMSCharacterBase* OwningCharacter = GetOwningMSCharacter();
 	if (!OwningCharacter)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::SpawnWeaponForCharacter: OwningCharacter is invalid!"));
 		return;
 	}
 
-	if (!WeaponClass)
+	if (!InWeaponData)
 	{
-		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::SpawnWeaponForCharacter: WeaponClass is invalid!"));
+		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::SpawnWeaponForCharacter: WeaponData is invalid!"));
 		return;
 	}
 
-	// Define Spawning Parameters
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = OwningCharacter;
-	SpawnParams.Instigator = OwningCharacter;
-
-	// Spawning the Actor
-	const FVector Location = FVector::ZeroVector;
-	const FRotator Rotation = FRotator::ZeroRotator;
-
-	EquippedWeaponInstance = GetWorld()->SpawnActor<AWeaponBase>(
-		WeaponClass,
-		Location,
-		Rotation,
-		SpawnParams
-	);
-
+	// Only spawn a new weapon actor if there is not already one
 	if (!EquippedWeaponInstance)
 	{
-		UE_LOG(LogTemp, Error,
-		       TEXT("UWeaponManagerComponent::SpawnWeaponForCharacter: Failed to spawn weapon of class %s"),
-		       *WeaponClass->GetName());
-		return;
+		// Define Spawning Parameters
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = OwningCharacter;
+		SpawnParams.Instigator = OwningCharacter;
+
+		// Spawning the Actor
+		EquippedWeaponInstance = GetWorld()->SpawnActor<AWeaponBase>(
+			AWeaponBase::StaticClass(),
+			SpawnParams
+		);
+		
+		if (!EquippedWeaponInstance)
+		{
+			UE_LOG(LogTemp, Error,
+				   TEXT("UWeaponManagerComponent::SpawnWeaponForCharacter: Failed to spawn weapon of class %s"),
+				   *InWeaponData->GetName());
+			return;
+		}
 	}
-
-	// Attaching the Weapon Actor to the Socket
-	// We use an FAttachmentTransformRules for safety and clarity
-	const FAttachmentTransformRules AttachRules(EAttachmentRule::SnapToTarget, true);
-
-	EquippedWeaponInstance->AttachToComponent(
-		OwningCharacter->GetMesh(),
-		AttachRules,
-		EquippedWeaponInstance->WeaponData->EquippedSocketName
-	);
+	
+	// For new weapon: Initialize the weapon with the weapon data
+	// For switching weapon: Reinitialized with the new Weapon data
+	EquippedWeaponInstance->Initialize(InWeaponData);
+	EquippedWeaponInstance->AttachToCharacter(OwningCharacter->GetMesh(), InWeaponData->EquippedSocketName);
 }
 
 // This funtion is called in the client to set the weapon properties like AnimClass and movement properties
-void UWeaponManagerComponent::SetEquippedWeaponProperties()
+void UWeaponManagerComponent::SetEquippedWeaponProperties(UWeaponDataAsset* InWeaponData)
 {
-	if (!OwningCharacter)
+	AMSCharacterBase* OwningCharacter = GetOwningMSCharacter();
+	if (!OwningCharacter || !OwningCharacter->GetMesh())
 	{
-		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::SetWeaponAnimClass: OwningCharacter is invalid!"));
+		UE_LOG(LogTemp, Error, TEXT("UWeaponManagerComponent::SetWeaponAnimClass: OwningCharacter or OwningCharacter's mesh is invalid!"));
 		return;
 	}
-
-	UWeaponDataAsset* CurrentWeaponData = EquippedWeaponInstance ? EquippedWeaponInstance->WeaponData : UnarmedData;
-
+	
 	// Change the AnimInstance to the Weapon AnimInstance
-	OwningCharacter->GetMesh()->SetAnimInstanceClass(CurrentWeaponData->WeaponAnimBP);
+	if (InWeaponData->WeaponAnimBP)
+	{
+		OwningCharacter->GetMesh()->SetAnimInstanceClass(InWeaponData->WeaponAnimBP);
+	}
 
 	// Set movement properties from the equipped weapon
 	if (UCharacterMovementComponent* MovementComponent = OwningCharacter->GetCharacterMovement())
 	{
-		MovementComponent->MaxCustomMovementSpeed = CurrentWeaponData->MovementWeaponConfig.
+		MovementComponent->MaxWalkSpeed = InWeaponData->MovementWeaponConfig.
 		                                                                MaxWalkSpeed;
-		MovementComponent->bOrientRotationToMovement = CurrentWeaponData->MovementWeaponConfig.
+		MovementComponent->bOrientRotationToMovement = InWeaponData->MovementWeaponConfig.
 		                                                                   OrientRotationToMovement;
-		MovementComponent->bUseControllerDesiredRotation = CurrentWeaponData->MovementWeaponConfig.
+		MovementComponent->bUseControllerDesiredRotation = InWeaponData->MovementWeaponConfig.
 		                                                                       UseControllerDesiredRotation;
 	}
 }
+
+
 
 // ===================================
 // Replication functions
 // ===================================
 
+
+// This function only runs when the WeaponData is ready to be used
+void UWeaponManagerComponent::OnWeaponDataReady(UWeaponDataAsset* InWeaponData)
+{
+	// Only Set Equipped Weapon Properties if the weapon instance is already fully replicated
+	if (EquippedWeaponInstance && IsWeaponFullyReplicated(EquippedWeaponInstance))
+	{
+		SetEquippedWeaponProperties(InWeaponData);
+	}
+}
+
 // This function only runs on clients after the variable changes.
 void UWeaponManagerComponent::OnRep_EquippedWeaponInstance(AWeaponBase* OldWeapon)
 {
-	// Apply the cosmetic change based on the new weapon
-	SetEquippedWeaponProperties();
+	// Check if weapon is fully ready NOW
+	if (IsWeaponFullyReplicated(EquippedWeaponInstance))
+	{
+		SetEquippedWeaponProperties(EquippedWeaponInstance ? EquippedWeaponInstance->WeaponData : UnarmedData);
+	}
+}
+
+bool UWeaponManagerComponent::IsWeaponFullyReplicated(AWeaponBase* Weapon) const
+{
+	if (!Weapon)
+	{
+		return true; // Unequip case - no data needed
+	}
+
+	// Check that weapon instance exists AND has valid data
+	if (!IsValid(Weapon->WeaponData))
+	{
+		return false;
+	}
+
+	// Optional: Add more checks if your weapon has other replicated properties
+	// that must be ready (e.g., ammo count, attachments, etc.)
+
+	return true;
 }
 
 // ===================================
@@ -336,95 +403,95 @@ void UWeaponManagerComponent::OnRep_EquippedWeaponInstance(AWeaponBase* OldWeapo
 // ===================================
 
 // Build the lookup map from tags to weapon classes
-void UWeaponManagerComponent::BuildWeaponTagLookup()
-{
-	WeaponClassesByTag.Empty();
-
-	for (const TSubclassOf<AWeaponBase>& WeaponClass : AvailableWeapons)
-	{
-		// Check valid class
-		if (!*WeaponClass)
-		{
-			continue;
-		}
-
-		// Get class default object (CDO) to read WeaponData without spawning
-		const AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
-		if (!CDO)
-		{
-			continue;
-		}
-
-		// Get tag from WeaponData
-		const FGameplayTag& Tag = CDO->WeaponData->WeaponTag;
-		if (Tag.IsValid())
-		{
-			WeaponClassesByTag.Add(Tag, WeaponClass);
-		}
-	}
-}
+// void UWeaponManagerComponent::BuildWeaponTagLookup()
+// {
+// 	WeaponClassesByTag.Empty();
+//
+// 	for (const TSubclassOf<AWeaponBase>& WeaponClass : AvailableWeaponsData)
+// 	{
+// 		// Check valid class
+// 		if (!*WeaponClass)
+// 		{
+// 			continue;
+// 		}
+// 		
+// 		// Get class default object (CDO) to read WeaponData without spawning
+// 		const AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
+// 		if (!CDO)
+// 		{
+// 			continue;
+// 		}
+// 		
+// 		// Get tag from WeaponData
+// 		const FGameplayTag& Tag = CDO->WeaponData->WeaponTag;
+// 		if (Tag.IsValid())
+// 		{
+// 			WeaponClassesByTag.Add(Tag, WeaponClass);
+// 		}
+// 	}
+// }
 
 // Rebuild the lookup map from tags to weapon classes
-void UWeaponManagerComponent::RebuildWeaponTagLookup()
-{
-	WeaponClassesByTag.Empty();
-
-	for (const auto& WeaponClass : AvailableWeapons)
-	{
-		if (!*WeaponClass)
-		{
-			continue;
-		}
-
-		AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
-		if (CDO && CDO->WeaponData->WeaponTag.IsValid())
-		{
-			WeaponClassesByTag.Add(CDO->WeaponData->WeaponTag, WeaponClass);
-		}
-	}
-}
+// void UWeaponManagerComponent::RebuildWeaponTagLookup()
+// {
+// 	WeaponClassesByTag.Empty();
+//
+// 	for (const auto& WeaponClass : AvailableWeaponsData)
+// 	{
+// 		if (!*WeaponClass)
+// 		{
+// 			continue;
+// 		}
+//
+// 		AWeaponBase* CDO = WeaponClass->GetDefaultObject<AWeaponBase>();
+// 		if (CDO && CDO->WeaponData->WeaponTag.IsValid())
+// 		{
+// 			WeaponClassesByTag.Add(CDO->WeaponData->WeaponTag, WeaponClass);
+// 		}
+// 	}
+// }
 
 // Get weapon classes for a given tag
-void UWeaponManagerComponent::GetWeaponClassesForTag(const FGameplayTag& Tag,
-                                                     TArray<TSubclassOf<AWeaponBase>>& OutClasses) const
-{
-	OutClasses.Reset();
-	WeaponClassesByTag.MultiFind(Tag, OutClasses);
-}
+// void UWeaponManagerComponent::GetWeaponClassesForTag(const FGameplayTag& Tag,
+//                                                      TArray<TSubclassOf<AWeaponBase>>& OutClasses) const
+// {
+// 	OutClasses.Reset();
+// 	WeaponClassesByTag.MultiFind(Tag, OutClasses);
+// }
 
 // ===================================
 // Debug Utils
 // ===================================
 
 // Use to print logs to debug weapon tag cache 
-void UWeaponManagerComponent::PrintWeaponTagCache() const
-{
-	UE_LOG(LogTemp, Log, TEXT("WeaponClassesByTag cache contents:"));
-
-	// First get all unique keys (tags)
-	TArray<FGameplayTag> UniqueTags;
-	WeaponClassesByTag.GenerateKeyArray(UniqueTags);
-
-	// Iterate each unique tag
-	for (const FGameplayTag& Tag : UniqueTags)
-	{
-		// Get all weapon classes for this tag
-		TArray<TSubclassOf<AWeaponBase>> Classes;
-		WeaponClassesByTag.MultiFind(Tag, Classes);
-
-		FString ClassNames;
-		for (const TSubclassOf<AWeaponBase>& WeaponClass : Classes)
-		{
-			if (*WeaponClass)
-			{
-				ClassNames += WeaponClass->GetName() + TEXT(", ");
-			}
-			else
-			{
-				ClassNames += TEXT("InvalidClass, ");
-			}
-		}
-
-		UE_LOG(LogTemp, Log, TEXT("Tag: %s => Classes: %s"), *Tag.ToString(), *ClassNames);
-	}
-}
+// void UWeaponManagerComponent::PrintWeaponTagCache() const
+// {
+// 	UE_LOG(LogTemp, Log, TEXT("WeaponClassesByTag cache contents:"));
+//
+// 	// First get all unique keys (tags)
+// 	TArray<FGameplayTag> UniqueTags;
+// 	WeaponClassesByTag.GenerateKeyArray(UniqueTags);
+//
+// 	// Iterate each unique tag
+// 	for (const FGameplayTag& Tag : UniqueTags)
+// 	{
+// 		// Get all weapon classes for this tag
+// 		TArray<TSubclassOf<AWeaponBase>> Classes;
+// 		WeaponClassesByTag.MultiFind(Tag, Classes);
+//
+// 		FString ClassNames;
+// 		for (const TSubclassOf<AWeaponBase>& WeaponClass : Classes)
+// 		{
+// 			if (*WeaponClass)
+// 			{
+// 				ClassNames += WeaponClass->GetName() + TEXT(", ");
+// 			}
+// 			else
+// 			{
+// 				ClassNames += TEXT("InvalidClass, ");
+// 			}
+// 		}
+//
+// 		UE_LOG(LogTemp, Log, TEXT("Tag: %s => Classes: %s"), *Tag.ToString(), *ClassNames);
+// 	}
+// }

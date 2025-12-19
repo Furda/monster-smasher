@@ -44,13 +44,14 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Ability_Movement_Dodge);
 // ----- Weapons -----
 
 // Unarmed
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(Weapon_Type_Unarmed)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Type_Unarmed)
 
 // Melee Weapons
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Type_Sword);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Type_Axe);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Type_Fist);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Type_Spear);
+
 
 // Range Weapons
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Weapon_Type_Bow);

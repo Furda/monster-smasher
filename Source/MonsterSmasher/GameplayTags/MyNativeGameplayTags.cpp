@@ -42,7 +42,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Ability_Movement_Dodge, "Ability.Movement.Dodge");
 // ----- Weapons -----
 
 // Unarmed 
-UE_DEFINE_GAMEPLAY_TAG(Weapon_Type_Unarmed, "Weapon.Type.Unarmed");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Type_Unarmed, "Weapon.Type.Unarmed");
 
 // Melee Weapons
 UE_DEFINE_GAMEPLAY_TAG(TAG_Weapon_Type_Sword, "Weapon.Type.Sword");

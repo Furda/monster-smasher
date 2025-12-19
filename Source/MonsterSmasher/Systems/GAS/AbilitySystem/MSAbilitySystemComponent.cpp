@@ -5,9 +5,9 @@
 #include "MSAbilitySystemComponent.h"
 
 #include "AbilitySystemGlobals.h"
-#include "Characters/Base/MSCharacterBase.h"
 #include "Systems/GAS/Abilities/MSGameplayAbility.h"
-#include "Input/MSInputConfig.h" // For UMSInputConfig
+#include "Input/FMSInputAction.h"
+#include "Input/MSInputConfig.h"
 
 class UMSGameplayAbility;
 
@@ -18,8 +18,8 @@ class UMSGameplayAbility;
 
 UMSAbilitySystemComponent::UMSAbilitySystemComponent()
 {
-	// PrimaryComponentTick.bCanEverTick = true;
-	// PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
 
@@ -44,10 +44,21 @@ void UMSAbilitySystemComponent::AbilityLocalInputReleased(int32 InputID)
 // Granting abilities
 // ==============================
 
+void UMSAbilitySystemComponent::BroadcastAbilitiesChanged() const
+{
+	OnAbilitiesChanged.Broadcast();
+}
+
 // Grants abilities by iterating over the InputConfig's AbilityInputActions
 TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig(
 	const UMSInputConfig* InputConfig, AActor* InOwnerActor)
 {
+	if (!IsOwnerActorAuthoritative())
+	{
+		UE_LOG(LogTemp, Error, TEXT("UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig: Only the server can grant abilities!"));
+		return TArray<FGameplayAbilitySpecHandle>();
+	}
+	
 	if (!InputConfig)
 	{
 		UE_LOG(LogTemp, Error, TEXT("UMSAbilitySystemComponent::GiveAbilitiesFromInputConfig: InputConfig is null!"));
@@ -83,15 +94,12 @@ TArray<FGameplayAbilitySpecHandle> UMSAbilitySystemComponent::GiveAbilitiesFromI
 void UMSAbilitySystemComponent::OnRep_ActivateAbilities()
 {
 	Super::OnRep_ActivateAbilities();
-
-	// TODO: Double check logic for PlayerState own characters
-	AMSCharacterBase* OwnerCharacter = Cast<AMSCharacterBase>(GetOwner());
-	if (!OwnerCharacter) return;
+	
+	UE_LOG(LogTemp, Warning, TEXT("UMSAbilitySystemComponent::OnRep_ActivateAbilities"));
 	
 	bool bHasAbilitiesChanged = false;
 	if (LastActivatableAbilities.Num() != ActivatableAbilities.Items.Num())
 	{
-		OwnerCharacter->SendAbilitiesChangedEvent();
 		bHasAbilitiesChanged = true;
 	}
 	else
@@ -100,13 +108,61 @@ void UMSAbilitySystemComponent::OnRep_ActivateAbilities()
 		{
 			if (LastActivatableAbilities[i].Ability != ActivatableAbilities.Items[i].Ability)
 			{
-				OwnerCharacter->SendAbilitiesChangedEvent();
 				bHasAbilitiesChanged = true;
 				break; // break the loop since already detected a change
 			}
 		}
 	}
+	
+	if (bHasAbilitiesChanged)
+	{
+		LastActivatableAbilities = ActivatableAbilities.Items;
+		BroadcastAbilitiesChanged();
+	}
+}
 
-	if (bHasAbilitiesChanged) LastActivatableAbilities = ActivatableAbilities.Items;
+void UMSAbilitySystemComponent::OnGiveAbility(FGameplayAbilitySpec& AbilitySpec)
+{
+	Super::OnGiveAbility(AbilitySpec);
+    
+	// Increment pending changes
+	PendingAbilityChanges++;
+    
+	// Schedule deferred broadcast (will reset timer if already pending)
+	ScheduleDeferredBroadcast();
+}
 
+void UMSAbilitySystemComponent::OnRemoveAbility(FGameplayAbilitySpec& AbilitySpec)
+{
+	Super::OnRemoveAbility(AbilitySpec);
+    
+	// Increment pending changes
+	PendingAbilityChanges++;
+    
+	// Schedule deferred broadcast
+	ScheduleDeferredBroadcast();
+}
+
+void UMSAbilitySystemComponent::ScheduleDeferredBroadcast()
+{
+	if (UWorld* World = GetWorld())
+	{
+		// Clear any existing timer
+		World->GetTimerManager().ClearTimer(DeferredBroadcastTimer);
+        
+		// Schedule new broadcast for next tick
+		World->GetTimerManager().SetTimerForNextTick([this]()
+		{
+			ExecuteDeferredBroadcast();
+		});
+	}
+}
+
+void UMSAbilitySystemComponent::ExecuteDeferredBroadcast()
+{
+	if (PendingAbilityChanges > 0)
+	{
+		PendingAbilityChanges = 0;
+		BroadcastAbilitiesChanged();
+	}
 }

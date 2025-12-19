@@ -5,6 +5,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Blueprint/UserWidget.h"
 #include "Core/HUD/UI/W_MSGameHUD.h"
+#include "Input/FMSInputAction.h"
 #include "Core/PlayerState/MSPlayerState.h"
 #include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
@@ -123,11 +124,11 @@ void AMSPlayerController::TryInitializeHUDWithGAS()
 		// Cast to your custom PlayerState
 		AMSPlayerState* MSPlayerState = Cast<AMSPlayerState>(PlayerState);
 
-		// Call the widget's initialization function!
+		// Call the widget's initialization function
 		if (MSPlayerState && MSPlayerState->GetAbilitySystemComponent() && MSPlayerState->GetAttributeSet())
 		{
 			GameHUD->InitializeHUDWithGAS(
-				Cast<UMSAbilitySystemComponent>(MSPlayerState->GetAbilitySystemComponent()),
+				MSPlayerState->GetMSAbilitySystemComponent(),
 				MSPlayerState->GetAttributeSet()
 			);
 

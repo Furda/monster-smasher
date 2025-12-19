@@ -34,17 +34,20 @@ public:
 	// Initialize widget with ASC
 	UFUNCTION(BlueprintCallable)
 	void InitializeWithGAS(UMSAbilitySystemComponent* InASC);
-
-
+	
+	
 	// =======================
 	// Update abilities on event change
 	// =======================
 
+public:
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Abilities")
 	FGameplayTag AbilitiesChangedEventTag = TAG_Event_Abilities_Changed;
 	FDelegateHandle AbilitiesChangedEventHandle;
 	
-	void HandleGameplayEvent(const FGameplayTag EventTag, const FGameplayEventData* Payload);
+	UFUNCTION()
+	void HandleOnAbilitiesChanged();
 	
 	// Refresh ability slots with abilities granted
 	UFUNCTION(BlueprintCallable)
@@ -70,6 +73,8 @@ protected:
 	TArray<TSubclassOf<UMSGameplayAbility>> AbilitiesToDisplay;
 
 private:
+	
 	UPROPERTY()
 	TObjectPtr<UMSAbilitySystemComponent> CachedASC;
+	
 };

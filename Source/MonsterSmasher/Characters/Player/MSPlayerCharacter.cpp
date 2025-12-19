@@ -14,6 +14,7 @@
 #include "AbilitySystemComponent.h"
 #include "Core/PlayerController/MSPlayerController.h"
 #include "Systems/WeaponSystem/WeaponManagerComponent.h"
+#include "Systems/CombatSystem/CombatSystemComponent.h"
 
 
 // =======================
@@ -66,6 +67,9 @@ AMSPlayerCharacter::AMSPlayerCharacter()
 
 	// NOTE: This might need to change when we create the Combat Component since the weapon manager component could live inside the combat component
 	WeaponManager = CreateDefaultSubobject<UWeaponManagerComponent>(TEXT("WeaponManager"));
+	
+	// ----- Initialize the Weapon Manager Component -----
+	CombatSystemComponent = CreateDefaultSubobject<UCombatSystemComponent>(TEXT("CombatSystem"));
 }
 
 void AMSPlayerCharacter::BeginPlay()
@@ -208,6 +212,4 @@ void AMSPlayerCharacter::GrantStartingAbilities()
 
 	// Grant abilities using the ability input config and save the handles to the granted abilities array
 	GrantedAbilities = AbilitySystemComponent->GiveAbilitiesFromInputConfig(AbilityInputConfig, this);
-
-	SendAbilitiesChangedEvent();
 }

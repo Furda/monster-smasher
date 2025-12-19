@@ -17,8 +17,8 @@ struct FMovementWeaponConfig
 	float MaxWalkSpeed = 100.0f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	bool OrientRotationToMovement;
+	bool OrientRotationToMovement = true;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	bool UseControllerDesiredRotation;
+	bool UseControllerDesiredRotation = false;
 };

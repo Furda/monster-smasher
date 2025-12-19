@@ -38,13 +38,6 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
-private:
-	UPROPERTY()
-	TWeakObjectPtr<UMSAbilitySystemComponent> CachedASC;
-
-	UPROPERTY()
-	TWeakObjectPtr<UMSAttributeSet> CachedAttributeSet;
 	
 	// ====================================================
 	// Weapon data management
@@ -114,7 +107,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Combo")
 	UAnimMontage* GetCurrentComboMontage(FGameplayTag AttackTag) const;
 
-	// Check if player can progress combo
+	// Check if the attack can progress combo
 	UFUNCTION(BlueprintCallable, Category = "Combat|Combo")
 	bool IsInComboWindow() const;
 

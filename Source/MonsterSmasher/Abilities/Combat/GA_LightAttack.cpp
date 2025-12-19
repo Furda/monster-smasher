@@ -55,7 +55,7 @@ void UGA_LightAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	}
 	
 	// TODO: Check if we need failures tags and if we need to send a gameplay event on failure
-	// Check if the combat component can activate the ability
+	// Check if the combat component can activate the ability 
 	FGameplayTagContainer FailureTags;	
 	if (!CombatComp->CanActivateAbility(AbilityDataTag, FailureTags))
 	{

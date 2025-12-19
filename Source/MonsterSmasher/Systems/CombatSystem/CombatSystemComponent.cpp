@@ -4,9 +4,6 @@
 
 #include "CombatSystemComponent.h"
 
-#include "AbilitySystemInterface.h"
-#include "Systems/GAS/Attributes/MSAttributeSet.h"
-#include "Systems/GAS/AbilitySystem/MSAbilitySystemComponent.h"
 #include "Systems/WeaponSystem/Data/WeaponDataAsset.h"
 
 
@@ -18,11 +15,9 @@
 // Sets default values for this component's properties
 UCombatSystemComponent::UCombatSystemComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+	
+	// Initialize with Unarmed state
 }
 
 
@@ -30,40 +25,6 @@ UCombatSystemComponent::UCombatSystemComponent()
 void UCombatSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AActor* OwnerActor = GetOwner();
-
-	// Check for null early
-	if (!OwnerActor)
-	{
-		return;
-	}
-
-	// Safely cast the Owner to the IAbilitySystemInterface
-	IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(OwnerActor);
-
-	// Check if the owner implements the interface
-	if (!ASCInterface)
-	{
-		// The owner doesn't implement the standard interface for GAS. Log a warning.
-		UE_LOG(LogTemp, Warning, TEXT("Component owner does not implement IAbilitySystemInterface."));
-		return;
-	}
-
-	// Get the base UAbilitySystemComponent*
-	UAbilitySystemComponent* BaseASC = ASCInterface->GetAbilitySystemComponent();
-
-	// Check if the component was successfully returned
-	if (!BaseASC)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("IAbilitySystemInterface returned a null AbilitySystemComponent."));
-		return;
-	}
-
-
-	// Cache the reference after all safe checks
-	CachedASC = Cast<UMSAbilitySystemComponent>(BaseASC);
-	CachedAttributeSet = const_cast<UMSAttributeSet*>(CachedASC->GetSet<UMSAttributeSet>());
 }
 
 
@@ -72,8 +33,6 @@ void UCombatSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                      FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 
@@ -144,7 +103,8 @@ bool UCombatSystemComponent::CanActivateAbility(FGameplayTag AbilityTag, FGamepl
 	
 	
 	// Combo validation
-	if (AbilityTag.MatchesTag(FGameplayTag::RequestGameplayTag("Combat.Ability.LightAttack")))
+	// AbilityTag.MatchesTag(FGameplayTag::RequestGameplayTag("Combat.Ability.LightAttack"))
+	if (AbilityTag.MatchesTag(TAG_Combo_Window_LightAttack))
 	{
 		// Logic to determine if the Light attack can be activated
 		
@@ -206,6 +166,14 @@ void UCombatSystemComponent::RegisterComboAttack(FGameplayTag AttackTag)
 UAnimMontage* UCombatSystemComponent::GetCurrentComboMontage(FGameplayTag AttackTag) const
 {
 	const FCombatAbilityData* AbilityData = GetAbilityData(AttackTag);
+	if (!AbilityData)
+	{
+		UE_LOG(LogTemp, Error, 
+		TEXT("UCombatSystemComponent::GetCurrentComboMontage - AbilityData not found for tag %s"), 
+		*AttackTag.ToString());
+		return nullptr;
+	}
+	
 	if (AbilityData->AbilityMontages.Num() == 0)
 		return nullptr;
 

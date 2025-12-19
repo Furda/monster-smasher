@@ -47,10 +47,6 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UImage> AbilityIcon;
 
-	// Text value for the name of the ability. This will show if the Ability icon is not set
-	// UPROPERTY(meta = (BindWidgetOptional))
-	// TObjectPtr<UTextBlock> AbilityText;
-
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> CooldownText;
 

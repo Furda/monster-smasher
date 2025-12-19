@@ -2,6 +2,7 @@
 
 #include "MSInputConfig.h"
 #include "GameplayTagsManager.h"
+#include "FMSInputAction.h"
 
 // Find the Input Action associated with a given tag
 const UInputAction* UMSInputConfig::FindInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound) const

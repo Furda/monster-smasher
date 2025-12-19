@@ -6,11 +6,11 @@
 #include "Characters/Base/MSCharacterBase.h"
 #include "MSPlayerCharacter.generated.h"
 
-
+struct FInputActionValue;
+class UCombatSystemComponent;
 class UWeaponManagerComponent;
 class UCameraComponent;
 class USpringArmComponent;
-struct FInputActionValue;
 class AMSPlayerState;
 class UInputAction;
 class UMSInputConfig;
@@ -56,6 +56,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UWeaponManagerComponent> WeaponManager;
+	
+	
+	// =======================
+	// Combat System Component 
+	// =======================
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UCombatSystemComponent> CombatSystemComponent;
+	
 
 	// =======================
 	// Basic movement set up
