@@ -321,7 +321,7 @@ void UWeaponManagerComponent::SpawnWeaponForCharacter(UWeaponDataAsset* InWeapon
 	// For new weapon: Initialize the weapon with the weapon data
 	// For switching weapon: Reinitialized with the new Weapon data
 	EquippedWeaponInstance->Initialize(InWeaponData);
-	EquippedWeaponInstance->AttachToCharacter(OwningCharacter->GetMesh(), InWeaponData->EquippedSocketName);
+	EquippedWeaponInstance->AttachToCharacter(OwningCharacter->GetMesh());
 }
 
 // This funtion is called in the client to set the weapon properties like AnimClass and movement properties

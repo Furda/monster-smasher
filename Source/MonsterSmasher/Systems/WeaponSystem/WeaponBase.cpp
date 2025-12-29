@@ -13,31 +13,30 @@ AWeaponBase::AWeaponBase()
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 
-	// Create root mesh component
-	WeaponMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WeaponMesh"));
-	SetRootComponent(WeaponMesh.Get());
-
-	// Disable collision on mesh itself (we use HitCollision box instead)
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WeaponMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	// Create root component
+	WeaponRoot = CreateDefaultSubobject<USceneComponent>(TEXT("WeaponRoot"));
+	SetRootComponent(WeaponRoot);
 	
-	// Replicate mesh component
-	WeaponMesh->SetIsReplicated(true);
+	// Disable collision on root component itself (we use HitCollision box instead)
+	// WeaponRoot->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// WeaponRoot->SetCollisionResponseToAllChannels(ECR_Ignore);
 	
+	// Set Root component replication 
+	WeaponRoot->SetIsReplicated(true);
 	
-	// Create hit detection collision box
-	HitCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HitCollision"));
-	HitCollision->SetupAttachment(WeaponMesh);
-    
-	// TODO: Check if we need logic for hit detection since we are going to use trace for the hit detection
-	// Configure collision - only detect pawns during attacks
-	HitCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); // Disabled by default
-	HitCollision->SetCollisionObjectType(ECC_WorldDynamic);
-	HitCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
-	HitCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-    
-	// Set default box size (will be overridden by weapon data)
-	HitCollision->SetBoxExtent(FVector(50.f, 10.f, 10.f));
+	// // Create hit detection collision box
+	// HitCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HitCollision"));
+	// HitCollision->SetupAttachment(WeaponMesh);
+ //    
+	// // TODO: Check if we need logic for hit detection since we are going to use trace for the hit detection
+	// // Configure collision - only detect pawns during attacks
+	// HitCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision); // Disabled by default
+	// HitCollision->SetCollisionObjectType(ECC_WorldDynamic);
+	// HitCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	// HitCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+ //    
+	// // Set default box size (will be overridden by weapon data)
+	// HitCollision->SetBoxExtent(FVector(50.f, 10.f, 10.f));
     
 	// Bind overlap event
 	// HitCollision->OnComponentBeginOverlap.AddDynamic(this, &AWeaponBase::OnWeaponOverlap);
@@ -66,81 +65,117 @@ void AWeaponBase::Initialize(UWeaponDataAsset* InWeaponData)
 	}
 
 	WeaponData = InWeaponData;
-
-	// Configure mesh based on what's provided in the data asset
-	if (InWeaponData->WeaponStaticMesh)
+	
+	// Clean up old tracked parts
+    for (UStaticMeshComponent* OldWeaponPart : ActiveWeaponParts)
+    {
+        if (OldWeaponPart) OldWeaponPart->DestroyComponent();
+    }
+    ActiveWeaponParts.Empty();
+	
+	// Spawn each part defined in the Data Asset
+	for (const FWeaponMeshConfig& Part : InWeaponData->WeaponParts)
 	{
-		// Use static mesh (for rigid weapons like swords, axes)
-		WeaponMesh->SetStaticMesh(InWeaponData->WeaponStaticMesh);
-        
-		UE_LOG(LogTemp, Log, TEXT("AWeaponBase::Initialize - Set static mesh: %s"), 
-			*InWeaponData->WeaponStaticMesh->GetName());
-	}
-	// Handle skeletal mesh case if needed
-	// else if (InWeaponData->WeaponStaticMesh) 
-	// {
-	// 	// Use skeletal mesh (for animated weapons like whips, chains)
-	// 	WeaponMesh->SetSkeletalMesh(InWeaponData->WeaponSkeletalMesh);
- //        
-	// 	UE_LOG(LogTemp, Log, TEXT("AWeaponBase::Initialize - Set skeletal mesh: %s"), 
-	// 		*InWeaponData->WeaponSkeletalMesh->GetName());
-	// }
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AWeaponBase::Initialize - No mesh provided in WeaponData!"));
-	}
-
-	// Configure hit collision box
-	if (InWeaponData->HitCollisionExtent != FVector::ZeroVector)
-	{
-		HitCollision->SetBoxExtent(InWeaponData->HitCollisionExtent);
+		// Configure mesh based on what's provided in the data asset
+		if (Part.WeaponStaticMesh)
+		{
+			InitializeWeaponStaticMesh(Part);
+		}
+		// Handle skeletal mesh case if needed
+		// else if (Part.WeaponStaticMesh) 
+		// {
+		// 	// Use skeletal mesh (for animated weapons like whips, chains)
+		// 	WeaponMesh->SetSkeletalMesh(Part.WeaponSkeletalMesh);
+		//        
+		// 	UE_LOG(LogTemp, Log, TEXT("AWeaponBase::Initialize - Set skeletal mesh: %s"), 
+		// 		*Part.WeaponSkeletalMesh->GetName());
+		// }
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("AWeaponBase::Initialize - No mesh provided in WeaponData!"));
+		}
 	}
 	
-	if (InWeaponData->HitCollisionOffset != FVector::ZeroVector)
-	{
-		HitCollision->SetRelativeLocation(InWeaponData->HitCollisionOffset);
-	}
+
+	// Configure hit collision box
+	// if (InWeaponData->HitCollisionExtent != FVector::ZeroVector)
+	// {
+	// 	HitCollision->SetBoxExtent(InWeaponData->HitCollisionExtent);
+	// }
+	//
+	// if (InWeaponData->HitCollisionOffset != FVector::ZeroVector)
+	// {
+	// 	HitCollision->SetRelativeLocation(InWeaponData->HitCollisionOffset);
+	// }
 
 	// Apply any material overrides from weapon data
-	if (InWeaponData->WeaponMaterial)
-	{
-		WeaponMesh->SetMaterial(0, InWeaponData->WeaponMaterial);
-	}
+	// if (InWeaponData->WeaponMaterial)
+	// {
+	// 	WeaponMesh->SetMaterial(0, InWeaponData->WeaponMaterial);
+	// }
 }
 
-void AWeaponBase::AttachToCharacter(USceneComponent* ParentMesh, FName SocketName)
+void AWeaponBase::InitializeWeaponStaticMesh(const FWeaponMeshConfig& WeaponPart)
+{
+	// Use static mesh (for rigid weapons like swords, axes)
+	UStaticMeshComponent* NewWeaponPart = NewObject<UStaticMeshComponent>(this);
+	NewWeaponPart->SetStaticMesh(WeaponPart.WeaponStaticMesh);
+			
+	// Disable collision on the mesh itself
+	DisableWeaponPartColission(NewWeaponPart);
+			
+	// Set Replication on the Weapon part
+	NewWeaponPart->SetIsReplicated(true);
+			
+	// Finish component set up
+	NewWeaponPart->SetupAttachment(GetRootComponent());
+	NewWeaponPart->RegisterComponent();
+	ActiveWeaponParts.Add(NewWeaponPart);
+        
+	UE_LOG(LogTemp, Log, TEXT("AWeaponBase::Initialize - Set static mesh: %s"), 
+		*WeaponPart.WeaponStaticMesh->GetName());
+}
+
+void AWeaponBase::DisableWeaponPartColission(UStaticMeshComponent* WeaponPartMesh)
+{
+	WeaponPartMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponPartMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	// Ensure it doesn't affect navigation or character stepping
+	WeaponPartMesh->SetCanEverAffectNavigation(false);
+}
+
+void AWeaponBase::AttachToCharacter(USceneComponent* ParentMesh)
 {
 	if (!ParentMesh)
 	{
 		UE_LOG(LogTemp, Error, TEXT("AWeaponBase::AttachToCharacter - ParentMesh is null!"));
 		return;
 	}
+	
+	// Attach the Actor itself to the Character's root/mesh (neutral attachment)
+	FAttachmentTransformRules ActorRules(EAttachmentRule::SnapToTarget, true);
+	AttachToComponent(ParentMesh, ActorRules, NAME_None);
+	
 
-	// Verify socket exists on parent mesh
-	if (USkeletalMeshComponent* ParentSkeletal = Cast<USkeletalMeshComponent>(ParentMesh))
-	{
-		if (!ParentSkeletal->DoesSocketExist(SocketName))
-		{
-			UE_LOG(LogTemp, Error, 
-				TEXT("AWeaponBase::AttachToCharacter - Socket '%s' does not exist on parent mesh!"), 
-				*SocketName.ToString());
-			return;
-		}
-	}
-
-	// Attach weapon to character
-	FAttachmentTransformRules AttachRules(
+	// Set up rules for all the weapons to attach to the character
+	FAttachmentTransformRules PartsRules(
 		EAttachmentRule::SnapToTarget,  // Location
 		EAttachmentRule::SnapToTarget,  // Rotation
 		EAttachmentRule::KeepWorld,     // Scale
-		true                             // Weld simulated bodies
+		true                            // Weld simulated bodies
 	);
-
-	AttachToComponent(ParentMesh, AttachRules, SocketName);
-
-	UE_LOG(LogTemp, Log, 
-		TEXT("AWeaponBase::AttachToCharacter - Attached to socket '%s'"), 
-		*SocketName.ToString());
+	
+	// Distribute individual parts to their specific sockets
+	for (int32 i = 0; i < ActiveWeaponParts.Num(); i++)
+	{
+		if (ActiveWeaponParts[i] && WeaponData->WeaponParts.IsValidIndex(i))
+		{
+			FName TargetSocket = WeaponData->WeaponParts[i].SocketName;
+			ActiveWeaponParts[i]->AttachToComponent(ParentMesh, PartsRules, TargetSocket);
+            
+			UE_LOG(LogTemp, Log, TEXT("Weapon Part %d attached to socket: %s"), i, *TargetSocket.ToString());
+		}
+	}
 }
 
 // TODO: Check if we need this since Hit detection will be done through a trace
@@ -211,9 +246,20 @@ void AWeaponBase::AttachToCharacter(USceneComponent* ParentMesh, FName SocketNam
 void AWeaponBase::OnRep_WeaponData(UWeaponDataAsset* OldWeaponData)
 {
 	// Notify the owning character that data is ready
-	
 	if (UWeaponManagerComponent* WeaponManager = GetOwner()->FindComponentByClass<UWeaponManagerComponent>())
 	{
 		WeaponManager->OnWeaponDataReady(WeaponData);
+	}
+}
+
+void AWeaponBase::OnRep_WeaponParts(TArray<UStaticMeshComponent*> OldWeaponParts)
+{
+	// Replicate collision settings for each weapon part
+	for (UStaticMeshComponent* WeaponPartMesh : ActiveWeaponParts)
+	{
+		if (WeaponPartMesh)
+		{
+			DisableWeaponPartColission(WeaponPartMesh);
+		}
 	}
 }

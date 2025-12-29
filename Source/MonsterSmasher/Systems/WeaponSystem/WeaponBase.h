@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "WeaponBase.generated.h"
 
+struct FWeaponMeshConfig;
 class USkeletalMesh;
 class UWeaponDataAsset;
 class UBoxComponent;
@@ -38,12 +39,11 @@ public:
 	void Initialize(UWeaponDataAsset* InWeaponData);
 
 	/**
-	 * Attach weapon to character at specified socket
+	 * Attach weapon to a ParentMesh
 	 * @param ParentMesh - The skeletal mesh to attach to (usually character mesh)
-	 * @param SocketName - Socket name on the parent mesh (e.g., "RightHandSocket")
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	void AttachToCharacter(USceneComponent* ParentMesh, FName SocketName);
+	void AttachToCharacter(USceneComponent* ParentMesh);
 	
 	/**
 	 * Enable/disable weapon collision for hit detection
@@ -54,9 +54,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	UWeaponDataAsset* GetWeaponData() const { return WeaponData; }
-	
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	UStaticMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 
 	/**
 	* Reference to the data asset that configured this weapon
@@ -66,13 +63,20 @@ public:
 	
 protected:
 	
-	/**
-	 * Root mesh component - Might want to handle skeletal meshes in the future
-	 */
+	/** Neutral root for the weapon actor */
 	UPROPERTY(VisibleDefaultsOnly, Category = "Weapon|Components")
-	TObjectPtr<UStaticMeshComponent> WeaponMesh;
+	TObjectPtr<USceneComponent> WeaponRoot;
 	
-
+	/** Tracks the active mesh components spawned for this weapon */
+	UPROPERTY(BlueprintReadOnly, Category = "Weapon|Components", ReplicatedUsing=OnRep_WeaponParts)
+	TArray<TObjectPtr<UStaticMeshComponent>> ActiveWeaponParts;
+	
+	/** Set up the static mesh of a weapon part */
+	void InitializeWeaponStaticMesh(const FWeaponMeshConfig& WeaponPart);
+	
+	/** Disable collision of a weapon part mesh */
+	void DisableWeaponPartColission(UStaticMeshComponent* WeaponPartMesh);
+	
 	/**
 	* Collision box for hit detection during attacks
 	* Positioned to cover the weapon's damage-dealing area
@@ -99,4 +103,7 @@ protected:
 
 	UFUNCTION()
 	void OnRep_WeaponData(UWeaponDataAsset* OldWeaponData);
+	
+	UFUNCTION()
+	void OnRep_WeaponParts(TArray<UStaticMeshComponent*> OldWeaponParts);
 };

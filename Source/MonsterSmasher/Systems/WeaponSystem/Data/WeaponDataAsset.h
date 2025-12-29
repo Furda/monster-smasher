@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "FCombatAbilityData.h"
 #include "FMovementWeaponConfig.h"
+#include  "FWeaponMeshConfig.h"
 #include "Input/FMSInputAction.h"
 #include "Engine/DataAsset.h"
 #include "GameplayTags/MyNativeGameplayTags.h"
@@ -46,16 +47,13 @@ class MONSTERSMASHER_API UWeaponDataAsset : public UPrimaryDataAsset
 	// =====================================================
 	// Visual Representation - Choose ONE mesh type
 	// =====================================================
-	
-	/** Skeletal mesh for animated weapons (whips, chains, articulated weapons) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual",
-		meta = (DisplayName = "Skeletal Mesh (Optional)"))
-	TObjectPtr<USkeletalMesh> WeaponSkeletalMesh;
-	
-	/** Static mesh for rigid weapons (swords, axes, hammers) - more performant */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual",
-		meta = (DisplayName = "Static Mesh (Optional)"))
-	TObjectPtr<UStaticMesh> WeaponStaticMesh;
+
+	/**
+	 * Array of weapon part configurations, where each entry defines distinct meshes
+	 * and attachment points for assembling the complete visual representation of the weapon.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon|Visual")
+	TArray<FWeaponMeshConfig> WeaponParts;
 	
 	/** Optional material override for weapon mesh */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Visual")
@@ -70,9 +68,9 @@ class MONSTERSMASHER_API UWeaponDataAsset : public UPrimaryDataAsset
 	// Equipment
 	// =====================================================
 	
-	/** Socket name on character skeleton to attach weapon when equipped */
+	/** Socket name on character skeleton to attach root weapon */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Equipment")
-	FName EquippedSocketName = "RightHandSocket";
+	FName RootWeaponSocketName = "weapon_socket";
 	
 	/** Socket name on character skeleton when weapon is holstered */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Equipment")
@@ -175,17 +173,21 @@ class MONSTERSMASHER_API UWeaponDataAsset : public UPrimaryDataAsset
 	    }
     	
     	// Validation: Must have at least one mesh type
-    	if (!WeaponSkeletalMesh && !WeaponStaticMesh)
+    	for (const FWeaponMeshConfig& Part : WeaponParts)
     	{
-    		Context.AddError(FText::FromString("Weapon must have either a Skeletal Mesh or Static Mesh assigned!"));
-    		Result = EDataValidationResult::Invalid;
-    	}
+    		if (!Part.WeaponSkeletalMesh && !Part.WeaponStaticMesh)
+    		{
+    			Context.AddError(FText::FromString("Weapon must have either a Skeletal Mesh or Static Mesh assigned!"));
+    			Result = EDataValidationResult::Invalid;
+    		}
 
-    	// Validation: Warn if both mesh types are set
-    	if (WeaponSkeletalMesh && WeaponStaticMesh)
-    	{
-    		Context.AddWarning(FText::FromString("Both Skeletal and Static Mesh are set. Static Mesh will be used."));
+    		// Validation: Warn if both mesh types are set
+    		if (Part.WeaponSkeletalMesh && Part.WeaponStaticMesh)
+    		{
+    			Context.AddWarning(FText::FromString("Both Skeletal and Static Mesh are set. Static Mesh will be used."));
+    		}
     	}
+    	
 
     	// Validation: Must have at least one ability
     	if (AbilitiesToGrant.Num() == 0)
